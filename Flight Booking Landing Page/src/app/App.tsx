@@ -24,7 +24,8 @@ import { LivePriceDropAlert } from './components/LivePriceDropAlert';
 import { FlightSearchForm } from './components/FlightSearchForm';
 import { useCMSContent } from './hooks/useCMSContent';
 // import logo from '../imports/AVIOTIX_LOGO_1.svg?url';
-import logo from '../imports/AVIOTIX_LOGO_tranparent.svg?url';
+import logo from '../imports/AVIOTIX_LOGO_trans.svg?url';
+import logoClean from '../imports/AVIOTIX_LOGO_tranparent.svg?url';
 
 // ===== FALLBACK CMS DATA (used when backend has no entries) =====
 const FALLBACK_BLOGS = [
@@ -144,15 +145,16 @@ export function LandingPage() {
             {/* Left: Logo & Navigation */}
             <div className="flex items-center gap-10">
               {/* Logo */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 logo-container" style={{ maxWidth: 180 }}>
                 <img 
-                  src={logo} 
+                  src={isScrolled ? logoClean : logo} 
                   alt="Aviotixx" 
                   className={`transition-all duration-500 ${
                     isScrolled 
                       ? 'h-10' 
                       : 'h-12 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]'
                   }`} 
+                  style={{ maxWidth: 180, width: '100%', objectFit: 'contain' }}
                 />
               </div>
 

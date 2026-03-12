@@ -13,6 +13,7 @@ interface FlightSearchLoaderProps {
 export function FlightSearchLoader({ from, to, departDate, passengers, tripType }: FlightSearchLoaderProps) {
   const [progress, setProgress] = useState(0);
   const [currentTip, setCurrentTip] = useState(0);
+  const [searchStartTime] = useState(Date.now());
 
   const searchingTips = [
     "🔍 Scanning 500+ airlines worldwide...",
@@ -24,24 +25,35 @@ export function FlightSearchLoader({ from, to, departDate, passengers, tripType 
   ];
 
   useEffect(() => {
-    // Simulate progress
+    // More realistic progress based on typical API response times (8-15 seconds)
+    const expectedDuration = 12000; // 12 seconds average
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) return 100;
-        return prev + Math.random() * 15;
+        
+        const elapsed = Date.now() - searchStartTime;
+        const targetProgress = Math.min((elapsed / expectedDuration) * 100, 95);
+        
+        // Smooth progress towards target with some randomness
+        const increment = (targetProgress - prev) * 0.3 + Math.random() * 5;
+        return Math.min(prev + increment, targetProgress);
       });
-    }, 400);
+    }, 300);
 
-    // Rotate tips
+    // Rotate tips based on progress phases
     const tipInterval = setInterval(() => {
-      setCurrentTip(prev => (prev + 1) % searchingTips.length);
+      setCurrentTip(prev => {
+        const elapsed = Date.now() - searchStartTime;
+        const phase = Math.floor((elapsed / 2000) % searchingTips.length);
+        return phase;
+      });
     }, 2000);
 
     return () => {
       clearInterval(progressInterval);
       clearInterval(tipInterval);
     };
-  }, []);
+  }, [searchStartTime]);
 
   return (
     <div className="min-h-[600px] flex items-center justify-center px-4">

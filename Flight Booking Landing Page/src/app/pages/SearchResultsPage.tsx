@@ -46,51 +46,6 @@ export function SearchResultsPage() {
     performSearch();
   }, []);
 
-  // Apply filters whenever they change
-  const filteredFlights = searchResults.filter((flight) => {
-    // Filter by stops
-    if (filters.stops.length > 0) {
-      const stopFilter = filters.stops.some(stop => {
-        if (stop === 'nonstop') return flight.stops === 0;
-        if (stop === '1stop') return flight.stops === 1;
-        if (stop === '2+stops') return flight.stops >= 2;
-        return false;
-      });
-      if (!stopFilter) return false;
-    }
-
-    // Filter by airlines
-    if (filters.airlines.length > 0 && !filters.airlines.includes(flight.airline)) {
-      return false;
-    }
-
-    // Filter by price range
-    if (flight.price < filters.priceRange.min || flight.price > filters.priceRange.max) {
-      return false;
-    }
-
-    // Filter by cabin class
-    if (filters.cabinClass.length > 0 && !filters.cabinClass.includes(flight.cabinClass)) {
-      return false;
-    }
-
-    // Filter by departure time
-    if (filters.departureTime.length > 0 && flight.outbound[0]) {
-      const departTime = flight.outbound[0].departure.time;
-      const hour = parseInt(departTime.split(':')[0]);
-      const timeFilter = filters.departureTime.some(time => {
-        if (time === 'morning') return hour >= 6 && hour < 12;
-        if (time === 'afternoon') return hour >= 12 && hour < 18;
-        if (time === 'evening') return hour >= 18 && hour < 24;
-        if (time === 'night') return hour >= 0 && hour < 6;
-        return false;
-      });
-      if (!timeFilter) return false;
-    }
-
-    return true;
-  });
-
   const performSearch = async () => {
     if (!from || !to || !departDate) {
       setSearchError('Missing required search parameters');
@@ -143,9 +98,78 @@ export function SearchResultsPage() {
   };
 
   const handleCallNow = (flight: FlightResult) => {
-    console.log('User wants to book flight:', flight);
-    window.location.href = 'tel:+15551234567';
+    const phoneNumber = '+15551234567';
+    window.open(`tel:${phoneNumber}`);
   };
+
+  // Create detailed passenger display for loading screen
+  const getPassengerDisplayText = () => {
+    const parts = [];
+    const adultCount = parseInt(adults);
+    const childCount = parseInt(children);
+    const infantCount = parseInt(infants);
+    
+    if (adultCount > 0) {
+      parts.push(`${adultCount} Adult${adultCount > 1 ? 's' : ''}`);
+    }
+    
+    if (childCount > 0) {
+      parts.push(`${childCount} Child${childCount > 1 ? 'ren' : ''}`);
+    }
+    
+    if (infantCount > 0) {
+      parts.push(`${infantCount} Infant${infantCount > 1 ? 's' : ''}`);
+    }
+    
+    return parts.join(' + ');
+  };
+
+  // Apply filters whenever they change
+  const filteredFlights = searchResults.filter((flight) => {
+    // Filter by stops
+    if (filters.stops.length > 0) {
+      const stopFilter = filters.stops.some(stop => {
+        if (stop === 'nonstop') return flight.stops === 0;
+        if (stop === '1stop') return flight.stops === 1;
+        if (stop === '2+stops') return flight.stops >= 2;
+        return false;
+      });
+      if (!stopFilter) return false;
+    }
+
+    // Filter by airlines
+    if (filters.airlines.length > 0 && !filters.airlines.includes(flight.airline)) {
+      return false;
+    }
+
+    // Filter by price range
+    if (flight.price < filters.priceRange.min || flight.price > filters.priceRange.max) {
+      return false;
+    }
+
+    // Filter by cabin class
+    if (filters.cabinClass.length > 0 && !filters.cabinClass.includes(flight.cabinClass)) {
+      return false;
+    }
+
+    // Filter by departure time
+    if (filters.departureTime.length > 0 && flight.outbound[0]) {
+      const departTime = flight.outbound[0].departure.time;
+      const hour = parseInt(departTime.split(':')[0]);
+      const timeFilter = filters.departureTime.some(time => {
+        if (time === 'morning') return hour >= 6 && hour < 12;
+        if (time === 'afternoon') return hour >= 12 && hour < 18;
+        if (time === 'evening') return hour >= 18 && hour < 24;
+        if (time === 'night') return hour >= 0 && hour < 6;
+        return false;
+      });
+      if (!timeFilter) return false;
+    }
+
+    return true;
+  });
+
+
 
   const handleBackToSearch = () => {
     navigate('/');
@@ -173,8 +197,8 @@ export function SearchResultsPage() {
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <img src={logo} alt="Aviotixx" className="h-10" />
+            <div className="flex items-center gap-3 logo-container" style={{ maxWidth: 180 }}>
+              <img src={logo} alt="Aviotixx" className="h-10" style={{ maxWidth: 180, width: '100%', objectFit: 'contain' }} />
             </div>
 
             {/* Phone CTA */}
@@ -264,7 +288,7 @@ export function SearchResultsPage() {
             from={from}
             to={to}
             departDate={departDate}
-            passengers={`${parseInt(adults) + parseInt(children) + parseInt(infants)}`}
+            passengers={getPassengerDisplayText()}
             tripType={tripType}
           />
         ) : (

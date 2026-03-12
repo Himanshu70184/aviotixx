@@ -170,7 +170,7 @@ export async function transformEaseMyTripResponse(
     return [];
   }
 
-  console.log('🎫 Transforming flights for passenger counts:', passengerCounts);
+  // console.log('🎫 Transforming flights for passenger counts:', passengerCounts);
 
   const flights: TransformedFlight[] = [];
   const flightPromises: Promise<TransformedFlight | null>[] = [];
@@ -214,15 +214,7 @@ export async function transformEaseMyTripResponse(
           let totalFareINR = 0;
           
           // Debug: Log what the API actually returns
-          console.log(`🔍 Flight ${firstLeg.FlightNumber} Fare Debug:`, {
-            totalPassengers: passengerCounts ? passengerCounts.adults + passengerCounts.children + passengerCounts.infants : 'unknown',
-            paxFaresCount: segment.Fare.PaxFares?.length || 0,
-            segmentTotalFare: segment.Fare.TotalFareWithOutMarkUp,
-            paxFares: segment.Fare.PaxFares?.map(pf => ({ 
-              TotalFare: pf.TotalFare, 
-              BasicFare: pf.BasicFare 
-            })) || 'none'
-          });
+          // console.log(`🔍 Flight ${firstLeg.FlightNumber} Fare Debug:`, { ... });
           
           if (segment.Fare.PaxFares && segment.Fare.PaxFares.length > 0) {
             // Check if API returns individual passenger fares or just base fare
@@ -237,12 +229,12 @@ export async function transformEaseMyTripResponse(
             if (segment.Fare.PaxFares.length === expectedPassengerCount) {
               // API returns individual fares for each passenger
               totalFareINR = paxFareSum;
-              console.log(`✅ Using individual PaxFares (${segment.Fare.PaxFares.length} fares for ${expectedPassengerCount} passengers): INR ${totalFareINR}`);
+              // console.log(`✅ Using individual PaxFares (${segment.Fare.PaxFares.length} fares for ${expectedPassengerCount} passengers): INR ${totalFareINR}`);
             } else {
               // API returns base fare, multiply by passenger count
               const baseFare = segment.Fare.PaxFares[0].TotalFare || 0;
               totalFareINR = baseFare * expectedPassengerCount;
-              console.log(`🔄 Multiplying base fare: INR ${baseFare} × ${expectedPassengerCount} passengers = INR ${totalFareINR}`);
+              // console.log(`🔄 Multiplying base fare: INR ${baseFare} × ${expectedPassengerCount} passengers = INR ${totalFareINR}`);
             }
           } else {
             // Fallback: use segment total fare and multiply by passengers
@@ -250,12 +242,12 @@ export async function transformEaseMyTripResponse(
             const expectedPassengerCount = passengerCounts ? 
               passengerCounts.adults + passengerCounts.children + passengerCounts.infants : 1;
             totalFareINR = baseFare * expectedPassengerCount;
-            console.log(`🔄 Fallback: INR ${baseFare} × ${expectedPassengerCount} passengers = INR ${totalFareINR}`);
+            // console.log(`🔄 Fallback: INR ${baseFare} × ${expectedPassengerCount} passengers = INR ${totalFareINR}`);
           }
 
           // Convert INR to USD with dynamic exchange rates
           const priceInUSD = await convertINRtoUSD(totalFareINR);
-          console.log(`💰 Flight ${firstLeg.FlightNumber}: INR ${totalFareINR.toLocaleString()} → USD ${priceInUSD} (${passengerCounts ? `${passengerCounts.adults + passengerCounts.children + passengerCounts.infants} pax` : 'unknown pax'})`);
+          // console.log(`💰 Flight ${firstLeg.FlightNumber}: INR ${totalFareINR.toLocaleString()} → USD ${priceInUSD} (${passengerCounts ? `${passengerCounts.adults + passengerCounts.children + passengerCounts.infants} pax` : 'unknown pax'})`);
 
           // Get passenger-specific fare info (for baggage, policies, etc.)
           const paxFare = segment.Fare.PaxFares[0];

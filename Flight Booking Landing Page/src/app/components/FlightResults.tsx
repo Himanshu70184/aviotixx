@@ -229,7 +229,7 @@ export function FlightResults({ flights, loading, error, onCallNow, isMockData, 
       <div className="space-y-4">
         {displayFlights.map((flight, index) => (
           <FlightCard 
-            key={flight.id} 
+            key={`${flight.id}-${index}`} 
             flight={flight} 
             isRecommended={index === 0 && sortBy === 'recommended'} 
             onCallNow={onCallNow}

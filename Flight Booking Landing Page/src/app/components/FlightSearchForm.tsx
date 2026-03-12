@@ -39,8 +39,17 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
   const [showPassengerDropdown, setShowPassengerDropdown] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // Get today's date in YYYY-MM-DD format for min date restriction
+  const today = new Date().toISOString().split('T')[0];
+
   // Calculate total passengers for display
   const totalPassengers = formData.adults + formData.children + formData.infants;
+
+  // Simple passenger count display for button
+  const getPassengerDisplayText = () => {
+    const totalPax = formData.adults + formData.children + formData.infants;
+    return `${totalPax} Traveler${totalPax > 1 ? 's' : ''}`;
+  };
 
   // Add new multi-city segment
   const addSegment = () => {
@@ -212,7 +221,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                 onClick={() => setShowPassengerDropdown(!showPassengerDropdown)}
                 className="pl-3 pr-8 py-2 text-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent text-gray-900 transition-all bg-white/80 backdrop-blur-sm cursor-pointer font-medium whitespace-nowrap"
               >
-                {totalPassengers} {totalPassengers === 1 ? 'Traveler' : 'Travelers'}
+                {getPassengerDisplayText()}
               </button>
               <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,6 +239,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                       <div className="text-xs text-gray-500">12+ years</div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Adult -</span>
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, adults: Math.max(1, formData.adults - 1) })}
@@ -237,7 +247,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                       >
                         −
                       </button>
-                      <span className="w-8 text-center font-semibold">{formData.adults}</span>
+                      <span className="w-8 text-center text-gray-900 font-semibold">{formData.adults}</span>
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, adults: Math.min(9, formData.adults + 1) })}
@@ -255,6 +265,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                       <div className="text-xs text-gray-500">2-11 years</div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Child -</span>
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, children: Math.max(0, formData.children - 1) })}
@@ -262,7 +273,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                       >
                         −
                       </button>
-                      <span className="w-8 text-center font-semibold">{formData.children}</span>
+                      <span className="w-8 text-center text-gray-900 font-semibold">{formData.children}</span>
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, children: Math.min(9, formData.children + 1) })}
@@ -280,6 +291,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                       <div className="text-xs text-gray-500">Under 2 years</div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Infant -</span>
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, infants: Math.max(0, formData.infants - 1) })}
@@ -287,7 +299,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                       >
                         −
                       </button>
-                      <span className="w-8 text-center font-semibold">{formData.infants}</span>
+                      <span className="w-8 text-center text-gray-900 font-semibold">{formData.infants}</span>
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, infants: Math.min(formData.adults, formData.infants + 1) })}
@@ -365,7 +377,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                       onChange={(value) => updateSegment(index, 'from', value)}
                       placeholder="Origin"
                       icon="mappin"
-                      region="US"
+                      region="ALL"
                       label="From"
                     />
                     <AirportAutocomplete
@@ -373,7 +385,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                       onChange={(value) => updateSegment(index, 'to', value)}
                       placeholder="Destination"
                       icon="plane"
-                      region="INDIA"
+                      region="ALL"
                       label="To"
                     />
                   </div>
@@ -386,6 +398,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                       type="date"
                       value={segment.departDate}
                       onChange={(e) => updateSegment(index, 'departDate', e.target.value)}
+                      min={today}
                       className="w-full pl-8 pr-2 py-2.5 text-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent text-gray-900 transition-all relative z-20 bg-white/80 backdrop-blur-sm cursor-pointer"
                       style={{ colorScheme: 'light' }}
                     />
@@ -445,7 +458,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                   onChange={(value) => setFormData({ ...formData, from: value })}
                   placeholder="JFK"
                   icon="mappin"
-                  region="US"
+                  region="ALL"
                   label="From"
                 />
 
@@ -455,7 +468,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                   onChange={(value) => setFormData({ ...formData, to: value })}
                   placeholder="DEL"
                   icon="plane"
-                  region="INDIA"
+                  region="ALL"
                   label="To"
                 />
               </div>
@@ -470,6 +483,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                     type="date"
                     value={formData.departDate}
                     onChange={(e) => setFormData({ ...formData, departDate: e.target.value })}
+                    min={today}
                     className="w-full pl-8 pr-2 py-2.5 text-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent text-gray-900 transition-all relative z-20 bg-white/80 backdrop-blur-sm cursor-pointer"
                     style={{
                       colorScheme: 'light'
@@ -486,6 +500,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                       type="date"
                       value={formData.returnDate}
                       onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
+                      min={formData.departDate || today}
                       className="w-full pl-8 pr-2 py-2.5 text-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent text-gray-900 transition-all relative z-20 bg-white/80 backdrop-blur-sm cursor-pointer"
                       style={{
                         colorScheme: 'light'
