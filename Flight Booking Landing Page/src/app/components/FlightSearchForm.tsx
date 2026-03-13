@@ -77,14 +77,19 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
     
     // Validation for multi-city
     if (tripType === 'multicity') {
-      // Validate all segments
-      for (let i = 0; i < multiCitySegments.length; i++) {
-        const segment = multiCitySegments[i];
-        if (!segment.from || !segment.to || !segment.departDate) {
-          setValidationError(`Please complete all fields for Flight ${i + 1}`);
-          return;
-        }
+      // Filter out empty segments first
+      const validSegments = multiCitySegments.filter(segment => 
+        segment.from && segment.to && segment.departDate
+      );
+      
+      // Require at least 2 segments for multicity
+      if (validSegments.length < 2) {
+        setValidationError('Multi-city trips require at least 2 flight segments. Please add more segments.');
+        return;
       }
+      
+      // Update multiCitySegments to only include valid segments for submission
+      setMultiCitySegments(validSegments);
     } else {
       // Validation for one-way and round-trip
       if (!formData.from || !formData.to || !formData.departDate) {
@@ -110,12 +115,26 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
 
     setValidationError(null);
 
+    // For multicity, get the valid segments
+    const activeSegments = tripType === 'multicity' 
+      ? multiCitySegments.filter(segment => segment.from && segment.to && segment.departDate)
+      : multiCitySegments;
+
+    // Debug logging for multicity
+    if (tripType === 'multicity') {
+      console.log('🔍 Multicity Debug Info:');
+      console.log('Total segments in form:', multiCitySegments.length);
+      console.log('All segments:', multiCitySegments);
+      console.log('Valid/completed segments:', activeSegments.length);
+      console.log('Active segments being submitted:', activeSegments);
+    }
+
     // Build API payload based on trip type
     let flightSearchDetails;
     
     if (tripType === 'multicity') {
-      // Multi-city: map all segments
-      flightSearchDetails = multiCitySegments.map(segment => ({
+      // Multi-city: map all valid segments
+      flightSearchDetails = activeSegments.map(segment => ({
         BeginDate: segment.departDate,
         CurrencyCode: "INR",
         Origin: segment.from,
@@ -164,9 +183,9 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
 
     // Navigate to search results page with parameters
     const searchParams = new URLSearchParams({
-      from: tripType === 'multicity' ? multiCitySegments[0].from : formData.from,
-      to: tripType === 'multicity' ? multiCitySegments[multiCitySegments.length - 1].to : formData.to,
-      departDate: tripType === 'multicity' ? multiCitySegments[0].departDate : formData.departDate,
+      from: tripType === 'multicity' ? activeSegments[0].from : formData.from,
+      to: tripType === 'multicity' ? activeSegments[activeSegments.length - 1].to : formData.to,
+      departDate: tripType === 'multicity' ? activeSegments[0].departDate : formData.departDate,
       returnDate: formData.returnDate || '',
       adults: formData.adults.toString(),
       children: formData.children.toString(),
@@ -174,6 +193,11 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
       tripType: tripType,
       class: formData.class,
     });
+
+    // Add segments for multicity
+    if (tripType === 'multicity') {
+      searchParams.set('segments', JSON.stringify(activeSegments));
+    }
 
     navigate(`/search-results?${searchParams.toString()}`);
 

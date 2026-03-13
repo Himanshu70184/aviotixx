@@ -28,8 +28,20 @@ export function SearchResultsPage() {
   const adults = searchParams.get('adults') || '1';
   const children = searchParams.get('children') || '0';
   const infants = searchParams.get('infants') || '0';
-  const tripType = (searchParams.get('tripType') as 'roundtrip' | 'oneway') || 'roundtrip';
+  const tripType = (searchParams.get('tripType') as 'roundtrip' | 'oneway' | 'multicity') || 'roundtrip';
   const classType = searchParams.get('class') || 'economy';
+  
+  // Extract segments for multicity
+  const segmentsParam = searchParams.get('segments');
+  let segments: { from: string; to: string; departDate: string; }[] | undefined;
+  
+  if (tripType === 'multicity' && segmentsParam) {
+    try {
+      segments = JSON.parse(segmentsParam);
+    } catch (e) {
+      console.error('Error parsing multicity segments:', e);
+    }
+  }
 
   // Filter state
   const [filters, setFilters] = useState<FilterState>({
@@ -44,7 +56,16 @@ export function SearchResultsPage() {
   useEffect(() => {
     // Check if we have cached results from inquiry page return
     const cachedResults = sessionStorage.getItem('searchResultsCache');
-    const cacheKey = `${from}-${to}-${departDate}-${returnDate}-${adults}-${children}-${infants}-${tripType}-${classType}`;
+    
+    let cacheKey: string;
+    if (tripType === 'multicity' && segments) {
+      // For multicity, create cache key from segments
+      const segmentsKey = segments.map(s => `${s.from}-${s.to}-${s.departDate}`).join('|');
+      cacheKey = `${segmentsKey}-${adults}-${children}-${infants}-${tripType}-${classType}`;
+    } else {
+      // For one-way and roundtrip
+      cacheKey = `${from}-${to}-${departDate}-${returnDate}-${adults}-${children}-${infants}-${tripType}-${classType}`;
+    }
     
     if (cachedResults) {
       try {
@@ -66,14 +87,37 @@ export function SearchResultsPage() {
   }, []);
 
   const performSearch = async () => {
-    if (!from || !to || !departDate) {
-      setSearchError('Missing required search parameters');
-      setIsSearching(false);
-      return;
+    // Validate search parameters based on trip type
+    if (tripType === 'multicity') {
+      if (!segments || segments.length === 0) {
+        setSearchError('Missing required multicity segments');
+        setIsSearching(false);
+        return;
+      }
+      // Validate each segment
+      for (const segment of segments) {
+        if (!segment.from || !segment.to || !segment.departDate) {
+          setSearchError('Missing required parameters in multicity segment');
+          setIsSearching(false);
+          return;
+        }
+      }
+    } else {
+      // Standard validation for one-way and roundtrip
+      if (!from || !to || !departDate) {
+        setSearchError('Missing required search parameters');
+        setIsSearching(false);
+        return;
+      }
     }
 
     setIsSearching(true);
     setSearchError(null);
+
+    // Debug logging for multicity
+    if (tripType === 'multicity') {
+      console.log('Multicity search initiated:', { segments, adults, children, infants, classType });
+    }
 
     const searchParams: FlightSearchParams = {
       from,
@@ -85,7 +129,10 @@ export function SearchResultsPage() {
       infants,
       tripType,
       class: classType,
+      ...(tripType === 'multicity' && segments ? { segments } : {})
     };
+
+    console.log('Search parameters:', searchParams);
 
     try {
       const response = await searchFlights(searchParams);
@@ -96,7 +143,15 @@ export function SearchResultsPage() {
         setIsMockData(response.isMockData || false);
         
         // Cache results for potential return from inquiry page
-        const cacheKey = `${from}-${to}-${departDate}-${returnDate}-${adults}-${children}-${infants}-${tripType}-${classType}`;
+        let cacheKey: string;
+        if (tripType === 'multicity' && segments) {
+          // For multicity, create cache key from segments
+          const segmentsKey = segments.map(s => `${s.from}-${s.to}-${s.departDate}`).join('|');
+          cacheKey = `${segmentsKey}-${adults}-${children}-${infants}-${tripType}-${classType}`;
+        } else {
+          // For one-way and roundtrip
+          cacheKey = `${from}-${to}-${departDate}-${returnDate}-${adults}-${children}-${infants}-${tripType}-${classType}`;
+        }
         sessionStorage.setItem('searchResultsCache', JSON.stringify({
           key: cacheKey,
           results: response.flights,

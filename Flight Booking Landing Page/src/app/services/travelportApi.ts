@@ -73,6 +73,8 @@ export interface FlightResult {
   seats: number;
   aircraftType?: string;
   isRoundTrip?: boolean; // Flag to identify roundtrip flights
+  isMultiCity?: boolean; // Flag to identify multi-city flights
+  bondSegments?: FlightSegment[][]; // For multi-city: each bond as separate segment group
 }
 
 export interface FlightSearchResponse {

@@ -16,8 +16,8 @@ const router = Router();
  *   cabin: 0 (Economy) | 1 (First) | 2 (Business) | 4 (PremiumEconomy),
  *   searchDetails: [
  *     {
- *       origin: "DEL",
- *       destination: "BOM",
+ *       from: "DEL",        // or "origin": "DEL"
+ *       to: "BOM",          // or "destination": "BOM" 
  *       departDate: "2024-03-15"
  *     }
  *   ]

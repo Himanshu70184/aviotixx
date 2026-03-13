@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multicity Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-case { background: #f0f8ff; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .url { background: #333; color: #0f0; padding: 10px; border-radius: 4px; word-break: break-all; }
+        .segments { background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Multicity Implementation Fix</h1>
+    
+    <div class="test-case">
+        <h2>❌ Previous Issue</h2>
+        <p>Only 1 segment was being processed even if user added multiple segments.</p>
+        <div class="segments">
+            <strong>URL contained:</strong><br>
+            <code>[{"from":"JFK","to":"DXB","departDate":"2026-03-16"}]</code> ← Only 1 segment!
+        </div>
+    </div>
+    
+    <div class="test-case">
+        <h2>✅ Fixed Implementation</h2>
+        <p>Now properly filters and validates multiple segments:</p>
+        <div class="segments">
+            <strong>What the fix does:</strong>
+            <ul>
+                <li>✅ Filters out empty/incomplete segments</li>
+                <li>✅ Validates minimum 2 segments for multicity</li>
+                <li>✅ Only submits completed segments</li>
+                <li>✅ Proper error messages for incomplete forms</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="test-case">
+        <h2>🧪 Test Case: JFK → DXB → DEL → BOM</h2>
+        <p><strong>Expected URL after fix:</strong></p>
+        <div class="url">
+/search-results?from=JFK&to=BOM&departDate=2026-03-16&adults=1&children=0&infants=0&tripType=multicity&class=economy&segments=[{"from":"JFK","to":"DXB","departDate":"2026-03-16"},{"from":"DXB","to":"DEL","departDate":"2026-03-18"},{"from":"DEL","to":"BOM","departDate":"2026-03-20"}]
+        </div>
+        <div class="segments">
+            <strong>Decoded Segments:</strong>
+            <pre>[
+  {"from":"JFK","to":"DXB","departDate":"2026-03-16"},
+  {"from":"DXB","to":"DEL","departDate":"2026-03-18"},  
+  {"from":"DEL","to":"BOM","departDate":"2026-03-20"}
+]</pre>
+        </div>
+    </div>
+    
+    <div class="test-case">
+        <h2>📋 Testing Instructions</h2>
+        <ol>
+            <li>Go to the homepage</li>
+            <li>Select <strong>"Multi City"</strong> trip type</li>
+            <li>Fill out <strong>multiple segments</strong> (at least 2)</li>
+            <li>Leave some segments empty to test filtering</li>
+            <li>Submit and verify URL contains all completed segments</li>
+            <li>Check that search results show flights for each segment</li>
+        </ol>
+    </div>
+    
+    <script>
+        console.log('🔧 Multicity Fix Applied');
+        console.log('Changes made:');
+        console.log('1. Added segment filtering before validation');
+        console.log('2. Require minimum 2 segments for multicity');
+        console.log('3. Only submit completed segments to URL');
+        console.log('4. Better error messages for incomplete forms');
+    </script>
+</body>
+</html>

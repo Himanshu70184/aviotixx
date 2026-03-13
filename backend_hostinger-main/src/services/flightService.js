@@ -40,9 +40,10 @@ export const searchFlights = async (searchParams) => {
     validateEnvVariables();
  
     // Transform searchDetails to match EaseMyTrip format
+    // Support both "from/to" (frontend/Postman) and "origin/destination" (internal) formats
     const flightSearchDetails = searchDetails.map(detail => ({
-      Origin: detail.origin?.toUpperCase() || '',
-      Destination: detail.destination?.toUpperCase() || '',
+      Origin: (detail.origin || detail.from)?.toUpperCase() || '',
+      Destination: (detail.destination || detail.to)?.toUpperCase() || '',
       BeginDate: detail.departDate,
     }));
  

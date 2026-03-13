@@ -7,7 +7,7 @@ interface FlightSearchLoaderProps {
   to: string;
   departDate: string;
   passengers: string;
-  tripType: 'roundtrip' | 'oneway';
+  tripType: 'roundtrip' | 'oneway' | 'multicity';
 }
 
 export function FlightSearchLoader({ from, to, departDate, passengers, tripType }: FlightSearchLoaderProps) {
@@ -213,7 +213,9 @@ export function FlightSearchLoader({ from, to, departDate, passengers, tripType 
                 <Plane className="w-4 h-4" />
                 <span className="font-medium">Trip Type</span>
               </div>
-              <div className="text-gray-900 font-semibold capitalize">{tripType === 'roundtrip' ? 'Round Trip' : 'One Way'}</div>
+              <div className="text-gray-900 font-semibold capitalize">
+                {tripType === 'roundtrip' ? 'Round Trip' : tripType === 'multicity' ? 'Multi City' : 'One Way'}
+              </div>
             </div>
           </div>
 
