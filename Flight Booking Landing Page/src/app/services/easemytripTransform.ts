@@ -61,6 +61,7 @@ export interface EaseMyTripSegment {
   SearchId: string;
   EngineID: number;
   FareRule?: string;
+  IsRoundTrip?: boolean;
 }
 
 export interface EaseMyTripJourney {
@@ -111,6 +112,7 @@ export interface TransformedFlight {
   price: number;
   currency: string;
   outbound: TransformedFlightSegment[];
+  inbound?: TransformedFlightSegment[]; // For roundtrip flights
   totalDuration: string;
   stops: number;
   cabinClass: string;
@@ -119,6 +121,7 @@ export interface TransformedFlight {
   refundable: boolean;
   cancelPenalty: number;
   changePenalty: number;
+  isRoundTrip?: boolean; // Flag to identify roundtrip flights
 }
 
 // ==================== TRANSFORMATION FUNCTIONS ====================
@@ -177,16 +180,26 @@ export async function transformEaseMyTripResponse(
 
   response.data.Journeys.forEach((journey, journeyIndex) => {
     journey.Segments.forEach((segment, segmentIndex) => {
-      segment.Bonds.forEach((bond, bondIndex) => {
+      // Roundtrip detection: Check if segment contains both OutBound AND InBound bonds
+      const bondTypes = segment.Bonds.map(bond => bond.BoundType);
+      const hasOutbound = bondTypes.includes('OutBound');
+      const hasInbound = bondTypes.includes('InBound');
+      const isRoundTrip = hasOutbound && hasInbound;
+      
+      if (isRoundTrip) {
+        // Create ONE combined flight for the roundtrip
         const flightPromise = (async (): Promise<TransformedFlight | null> => {
-          // Get the first leg for airline info
-          const firstLeg = bond.Legs[0];
-          const lastLeg = bond.Legs[bond.Legs.length - 1];
+          const outboundBond = segment.Bonds.find(bond => bond.BoundType === 'OutBound');
+          const inboundBond = segment.Bonds.find(bond => bond.BoundType === 'InBound');
           
-          if (!firstLeg) return null;
-
-          // Transform legs to our segment format
-          const transformedSegments: TransformedFlightSegment[] = bond.Legs.map(leg => ({
+          if (!outboundBond) return null;
+          
+          // Get airline info from outbound first leg
+          const firstOutboundLeg = outboundBond.Legs[0];
+          if (!firstOutboundLeg) return null;
+          
+          // Transform outbound legs
+          const outboundSegments: TransformedFlightSegment[] = outboundBond.Legs.map(leg => ({
             airline: leg.AirlineName,
             flightNumber: leg.FlightNumber.trim(),
             departure: {
@@ -206,81 +219,191 @@ export async function transformEaseMyTripResponse(
             aircraftType: leg.AircraftType,
             operatedBy: leg.OperatedBy || undefined,
           }));
-
-          // Calculate total stops (connecting flights)
-          const totalStops = bond.Legs.length - 1;
-
+          
+          // Transform inbound legs (if exists)
+          let inboundSegments: TransformedFlightSegment[] | undefined = undefined;
+          if (inboundBond) {
+            inboundSegments = inboundBond.Legs.map(leg => ({
+              airline: leg.AirlineName,
+              flightNumber: leg.FlightNumber.trim(),
+              departure: {
+                airport: leg.Origin,
+                time: leg.DepartureTime,
+                date: formatEMTDate(leg.DepartureDate),
+                terminal: leg.DepartureTerminal,
+              },
+              arrival: {
+                airport: leg.Destination,
+                time: leg.ArrivalTime,
+                date: formatEMTDate(leg.ArrivalDate),
+                terminal: leg.ArrivalTerminal,
+              },
+              duration: leg.Duration,
+              stops: parseInt(leg.NumberOfStops) || 0,
+              aircraftType: leg.AircraftType,
+              operatedBy: leg.OperatedBy || undefined,
+            }));
+          }
+          
+          // Calculate total stops for outbound journey
+          const outboundStops = outboundBond.Legs.length - 1;
+          
           // Calculate total fare for ALL passengers
           let totalFareINR = 0;
           
-          // Debug: Log what the API actually returns
-          // console.log(`🔍 Flight ${firstLeg.FlightNumber} Fare Debug:`, { ... });
-          
           if (segment.Fare.PaxFares && segment.Fare.PaxFares.length > 0) {
-            // Check if API returns individual passenger fares or just base fare
             const paxFareSum = segment.Fare.PaxFares.reduce((sum, paxFare) => {
               return sum + (paxFare.TotalFare || 0);
             }, 0);
             
-            // If PaxFares array length equals total passengers, use sum directly
             const expectedPassengerCount = passengerCounts ? 
               passengerCounts.adults + passengerCounts.children + passengerCounts.infants : 1;
             
             if (segment.Fare.PaxFares.length === expectedPassengerCount) {
-              // API returns individual fares for each passenger
               totalFareINR = paxFareSum;
-              // console.log(`✅ Using individual PaxFares (${segment.Fare.PaxFares.length} fares for ${expectedPassengerCount} passengers): INR ${totalFareINR}`);
             } else {
-              // API returns base fare, multiply by passenger count
               const baseFare = segment.Fare.PaxFares[0].TotalFare || 0;
               totalFareINR = baseFare * expectedPassengerCount;
-              // console.log(`🔄 Multiplying base fare: INR ${baseFare} × ${expectedPassengerCount} passengers = INR ${totalFareINR}`);
             }
           } else {
-            // Fallback: use segment total fare and multiply by passengers
             const baseFare = segment.Fare.TotalFareWithOutMarkUp || 0;
             const expectedPassengerCount = passengerCounts ? 
               passengerCounts.adults + passengerCounts.children + passengerCounts.infants : 1;
             totalFareINR = baseFare * expectedPassengerCount;
-            // console.log(`🔄 Fallback: INR ${baseFare} × ${expectedPassengerCount} passengers = INR ${totalFareINR}`);
           }
 
-          // Convert INR to USD with dynamic exchange rates
+          // Convert INR to USD
           const priceInUSD = await convertINRtoUSD(totalFareINR);
-          // console.log(`💰 Flight ${firstLeg.FlightNumber}: INR ${totalFareINR.toLocaleString()} → USD ${priceInUSD} (${passengerCounts ? `${passengerCounts.adults + passengerCounts.children + passengerCounts.infants} pax` : 'unknown pax'})`);
-
-          // Get passenger-specific fare info (for baggage, policies, etc.)
+          
+          // Get passenger fare info
           const paxFare = segment.Fare.PaxFares[0];
-
-          // Get available seats
-          const availableSeats = parseInt(firstLeg.AvailableSeat || '9') || 9;
-
-          // Baggage info
+          const availableSeats = parseInt(firstOutboundLeg.AvailableSeat || '9') || 9;
           const baggageInfo = paxFare
             ? `${paxFare.BaggageWeight} ${paxFare.BaggageUnit}`
-            : `${firstLeg.BaggageWeight} ${firstLeg.BaggageUnit}`;
+            : `${firstOutboundLeg.BaggageWeight} ${firstOutboundLeg.BaggageUnit}`;
 
           return {
-            id: `${segment.ItineraryKey}-${bondIndex}`,
+            id: `${segment.ItineraryKey}-roundtrip`,
             journeyId: segment.ItineraryKey,
             segmentId: segment.SearchId,
-            airline: firstLeg.AirlineName,
+            airline: firstOutboundLeg.AirlineName,
             price: priceInUSD,
             currency: 'USD',
-            outbound: transformedSegments,
-            totalDuration: bond.JourneyTime,
-            stops: totalStops,
-            cabinClass: firstLeg.Cabin || cabinClass,
+            outbound: outboundSegments,
+            inbound: inboundSegments, // This will contain return flight segments
+            totalDuration: outboundBond.JourneyTime + (inboundBond ? ` + ${inboundBond.JourneyTime}` : ''),
+            stops: outboundStops,
+            cabinClass: firstOutboundLeg.Cabin || cabinClass,
             seats: availableSeats,
             baggage: baggageInfo,
             refundable: paxFare?.Refundable ?? true,
             cancelPenalty: paxFare?.CancelPenalty || 0,
             changePenalty: paxFare?.ChangePenalty || 0,
+            isRoundTrip: true,
           };
         })();
-        
         flightPromises.push(flightPromise);
-      });
+      } else {
+        // For one-way flights, create separate flights for each bond
+        segment.Bonds.forEach((bond, bondIndex) => {
+          const flightPromise = (async (): Promise<TransformedFlight | null> => {
+            // Get the first leg for airline info
+            const firstLeg = bond.Legs[0];
+            const lastLeg = bond.Legs[bond.Legs.length - 1];
+            
+            if (!firstLeg) return null;
+
+            // Transform legs to our segment format
+            const transformedSegments: TransformedFlightSegment[] = bond.Legs.map(leg => ({
+              airline: leg.AirlineName,
+              flightNumber: leg.FlightNumber.trim(),
+              departure: {
+                airport: leg.Origin,
+                time: leg.DepartureTime,
+                date: formatEMTDate(leg.DepartureDate),
+                terminal: leg.DepartureTerminal,
+              },
+              arrival: {
+                airport: leg.Destination,
+                time: leg.ArrivalTime,
+                date: formatEMTDate(leg.ArrivalDate),
+                terminal: leg.ArrivalTerminal,
+              },
+              duration: leg.Duration,
+              stops: parseInt(leg.NumberOfStops) || 0,
+              aircraftType: leg.AircraftType,
+              operatedBy: leg.OperatedBy || undefined,
+            }));
+
+            // Calculate total stops (connecting flights)
+            const totalStops = bond.Legs.length - 1;
+
+            // Calculate total fare for ALL passengers
+            let totalFareINR = 0;
+            
+            if (segment.Fare.PaxFares && segment.Fare.PaxFares.length > 0) {
+              // Check if API returns individual passenger fares or just base fare
+              const paxFareSum = segment.Fare.PaxFares.reduce((sum, paxFare) => {
+                return sum + (paxFare.TotalFare || 0);
+              }, 0);
+              
+              // If PaxFares array length equals total passengers, use sum directly
+              const expectedPassengerCount = passengerCounts ? 
+                passengerCounts.adults + passengerCounts.children + passengerCounts.infants : 1;
+              
+              if (segment.Fare.PaxFares.length === expectedPassengerCount) {
+                // API returns individual fares for each passenger
+                totalFareINR = paxFareSum;
+              } else {
+                // API returns base fare, multiply by passenger count
+                const baseFare = segment.Fare.PaxFares[0].TotalFare || 0;
+                totalFareINR = baseFare * expectedPassengerCount;
+              }
+            } else {
+              // Fallback: use segment total fare and multiply by passengers
+              const baseFare = segment.Fare.TotalFareWithOutMarkUp || 0;
+              const expectedPassengerCount = passengerCounts ? 
+                passengerCounts.adults + passengerCounts.children + passengerCounts.infants : 1;
+              totalFareINR = baseFare * expectedPassengerCount;
+            }
+
+            // Convert INR to USD with dynamic exchange rates
+            const priceInUSD = await convertINRtoUSD(totalFareINR);
+
+            // Get passenger-specific fare info (for baggage, policies, etc.)
+            const paxFare = segment.Fare.PaxFares[0];
+
+            // Get available seats
+            const availableSeats = parseInt(firstLeg.AvailableSeat || '9') || 9;
+
+            // Baggage info
+            const baggageInfo = paxFare
+              ? `${paxFare.BaggageWeight} ${paxFare.BaggageUnit}`
+              : `${firstLeg.BaggageWeight} ${firstLeg.BaggageUnit}`;
+
+            return {
+              id: `${segment.ItineraryKey}-${bondIndex}`,
+              journeyId: segment.ItineraryKey,
+              segmentId: segment.SearchId,
+              airline: firstLeg.AirlineName,
+              price: priceInUSD,
+              currency: 'USD',
+              outbound: transformedSegments,
+              totalDuration: bond.JourneyTime,
+              stops: totalStops,
+              cabinClass: firstLeg.Cabin || cabinClass,
+              seats: availableSeats,
+              baggage: baggageInfo,
+              refundable: paxFare?.Refundable ?? true,
+              cancelPenalty: paxFare?.CancelPenalty || 0,
+              changePenalty: paxFare?.ChangePenalty || 0,
+              isRoundTrip: false,
+            };
+          })();
+          
+          flightPromises.push(flightPromise);
+        });
+      }
     });
   });
 
@@ -288,7 +411,9 @@ export async function transformEaseMyTripResponse(
   const processedFlights = await Promise.all(flightPromises);
   
   // Filter out null results
-  return processedFlights.filter(flight => flight !== null) as TransformedFlight[];
+  const finalFlights = processedFlights.filter(flight => flight !== null) as TransformedFlight[];
+  
+  return finalFlights;
 }
 
 /**

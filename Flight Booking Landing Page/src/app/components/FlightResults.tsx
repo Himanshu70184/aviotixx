@@ -284,6 +284,178 @@ function FlightCard({
   // inbound legs: if any (round-trip)
   const inboundLegs = flight.inbound;
 
+  // Check if this is a roundtrip flight
+  const isRoundTrip = flight.isRoundTrip === true;
+
+  if (isRoundTrip) {
+    // Roundtrip Flight Layout - Same style as one-way but with both directions
+    return (
+      <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-xl border border-white/50 overflow-hidden hover:shadow-2xl hover:scale-[1.01] transition-all duration-300 group">
+        {/* Recommended Badge */}
+        {isRecommended && (
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 px-4 py-2 text-sm font-bold flex items-center gap-2 justify-center">
+            <Star className="w-4 h-4 fill-current" />
+            BEST VALUE - RECOMMENDED
+            <Star className="w-4 h-4 fill-current" />
+          </div>
+        )}
+
+        <div className="p-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            {/* Left Section - Flight Details */}
+            <div className="flex-1">
+              {/* Airline Info Bar */}
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/50">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm p-1.5 border border-gray-200">
+                    <img 
+                      src={airlineInfo.logoUrl} 
+                      alt={airlineInfo.name}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement!.innerHTML = '<svg class="w-6 h-6 text-[#1E3A8A]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>';
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900">{airlineInfo.name}</h3>
+                    <p className="text-xs text-gray-500">{flight.cabinClass} • Round Trip</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-medium">
+                    <Clock className="w-3 h-3" />
+                    {flight.totalDuration}
+                  </span>
+                  <span className={`flex items-center gap-1 px-2 py-1 rounded-full font-medium ${
+                    flight.stops === 0 
+                      ? 'bg-green-50 text-green-700' 
+                      : 'bg-orange-50 text-orange-700'
+                  }`}>
+                    <MapPin className="w-3 h-3" />
+                    {flight.stops === 0 ? 'Nonstop' : `${flight.stops} Stop${flight.stops > 1 ? 's' : ''}`}
+                  </span>
+                </div>
+              </div>
+
+              {/* Flight Routes - Both Outbound and Inbound */}
+              <div className="space-y-3">
+                {/* Outbound Journey */}
+                {outboundLegs && outboundLegs.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1">
+                      <Plane className="w-3 h-3" />
+                      Outbound • {new Date(outboundLegs[0].departure.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </div>
+                    <FlightRouteLine
+                      legs={outboundLegs}
+                      direction="out"
+                      totalDuration={outboundLegs[0].duration}
+                    />
+                  </div>
+                )}
+
+                {/* Inbound Journey */}
+                {inboundLegs && inboundLegs.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-purple-700 mb-2 flex items-center gap-1">
+                      <Plane className="w-3 h-3 transform rotate-180" />
+                      Return • {new Date(inboundLegs[0].departure.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </div>
+                    <FlightRouteLine
+                      legs={inboundLegs}
+                      direction="in"
+                      totalDuration={inboundLegs[0].duration}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Section - Price & CTA (same as one-way) */}
+            <div className="lg:border-l lg:border-gray-300/50 lg:pl-4 flex lg:flex-col flex-row lg:items-center items-end justify-between lg:justify-center gap-3 lg:min-w-[180px]">
+              <div className="lg:text-center text-right">
+                <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide mb-1">Total Price</p>
+                <div className="flex items-baseline gap-0.5 lg:justify-center justify-end">
+                  <span className="text-lg font-bold text-[#1E3A8A]">$</span>
+                  <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-br from-[#1E3A8A] to-[#0EA5E9]">
+                    {flight.price.toLocaleString()}
+                  </p>
+                </div>
+                <p className="text-[9px] text-gray-400 mt-0.5 font-medium">{flight.currency} • Tax included</p>
+              </div>
+
+              <div className="flex lg:flex-col flex-col-reverse gap-2 lg:w-full">
+                {/* Dynamic button based on flight priority */}
+                {index < 2 ? (
+                  <button
+                    onClick={() => onCallNow?.(flight)}
+                    className="bg-gradient-to-r from-[#FF6B35] to-[#F7931E] text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    <Phone className="w-4 h-4" />
+                    Call to Book
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onBook?.(flight)}
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    Book Flight
+                  </button>
+                )}
+
+                {/* Show Details Button */}
+                <button
+                  onClick={() => setShowDetails(!showDetails)}
+                  className="bg-white/60 hover:bg-white/90 text-[#1E3A8A] px-3 py-2 rounded-lg font-semibold text-xs border border-[#1E3A8A]/20 hover:border-[#1E3A8A]/40 transition-all duration-300 flex items-center justify-center gap-1 whitespace-nowrap"
+                >
+                  {showDetails ? 'Hide Details' : 'Show Details'}
+                </button>
+
+                <div className="bg-green-50 text-green-700 px-2.5 py-1 rounded-md text-[10px] font-semibold text-center border border-green-200">
+                  🔥 Save Up to $300
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Expandable Flight Details for Roundtrip */}
+        {showDetails && (
+          <div className="bg-white/20 backdrop-blur-sm border-t border-white/30 px-4 py-3">
+            <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <Plane className="w-4 h-4 text-[#1E3A8A]" />
+              Detailed Flight Information
+            </h4>
+            
+            <div className="space-y-4">
+              {/* Outbound Details */}
+              {outboundLegs && outboundLegs.length > 0 && (
+                <FlightSegmentDetails 
+                  segments={outboundLegs}
+                  direction="Outbound"
+                  directionColor="text-blue-700"
+                />
+              )}
+
+              {/* Inbound Details */}
+              {inboundLegs && inboundLegs.length > 0 && (
+                <FlightSegmentDetails 
+                  segments={inboundLegs}
+                  direction="Return"
+                  directionColor="text-purple-700"
+                />
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // One-way Flight Layout - existing design
   return (
     <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-xl border border-white/50 overflow-hidden hover:shadow-2xl hover:scale-[1.01] transition-all duration-300 group">
       {/* Recommended Badge */}
@@ -345,15 +517,6 @@ function FlightCard({
                   totalDuration={flight.totalDuration}
                 />
               )}
-
-              {/* Inbound Journey (round-trip) */}
-              {inboundLegs && inboundLegs.length > 0 && (
-                <FlightRouteLine
-                  legs={inboundLegs}
-                  direction="in"
-                  totalDuration={inboundLegs[0]?.duration ?? ''}
-                />
-              )}
             </div>
           </div>
 
@@ -408,7 +571,7 @@ function FlightCard({
         </div>
       </div>
 
-      {/* Expandable Flight Details */}
+      {/* Expandable Flight Details for One-way */}
       {showDetails && (
         <div className="bg-white/20 backdrop-blur-sm border-t border-white/30 px-4 py-3">
           <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
@@ -423,15 +586,6 @@ function FlightCard({
                 segments={outboundLegs}
                 direction="Outbound"
                 directionColor="text-blue-700"
-              />
-            )}
-
-            {/* Inbound Details (if round-trip) */}
-            {inboundLegs && inboundLegs.length > 0 && (
-              <FlightSegmentDetails 
-                segments={inboundLegs}
-                direction="Return"
-                directionColor="text-purple-700"
               />
             )}
           </div>
@@ -740,6 +894,42 @@ function FlightSegmentDetails({ segments, direction, directionColor }: SegmentDe
             <span className="font-medium">Total Distance:</span> ~8,500 miles
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// New component for roundtrip flight route display  
+function RoundtripFlightRoute({ legs }: { legs: any[] }) {
+  const firstLeg = legs[0];
+  const lastLeg = legs[legs.length - 1];
+  
+  return (
+    <div className="flex items-center justify-between p-4 bg-white/60 rounded-lg border border-gray-200">
+      {/* Departure */}
+      <div className="text-left">
+        <div className="text-2xl font-bold text-gray-900">{firstLeg.departure.time}</div>
+        <div className="text-sm font-semibold text-gray-700">{firstLeg.departure.airport}</div>
+        <div className="text-xs text-gray-500">{getAirportCity(firstLeg.departure.airport)}</div>
+      </div>
+      
+      {/* Flight info */}
+      <div className="flex-1 text-center px-4">
+        <div className="flex items-center justify-center mb-2">
+          <div className="flex-1 h-px bg-gray-300"></div>
+          <div className="px-3 text-xs text-gray-600 bg-gray-50 rounded-full border">
+            {legs.length > 1 ? `${legs.length - 1} stop${legs.length > 2 ? 's' : ''}` : 'Nonstop'}
+          </div>
+          <div className="flex-1 h-px bg-gray-300"></div>
+        </div>
+        <div className="text-xs text-gray-500">{firstLeg.duration}</div>
+      </div>
+      
+      {/* Arrival */}
+      <div className="text-right">
+        <div className="text-2xl font-bold text-gray-900">{lastLeg.arrival.time}</div>
+        <div className="text-sm font-semibold text-gray-700">{lastLeg.arrival.airport}</div>
+        <div className="text-xs text-gray-500">{getAirportCity(lastLeg.arrival.airport)}</div>
       </div>
     </div>
   );

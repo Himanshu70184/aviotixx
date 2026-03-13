@@ -42,7 +42,26 @@ export function SearchResultsPage() {
   });
 
   useEffect(() => {
-    // Perform search when component mounts
+    // Check if we have cached results from inquiry page return
+    const cachedResults = sessionStorage.getItem('searchResultsCache');
+    const cacheKey = `${from}-${to}-${departDate}-${returnDate}-${adults}-${children}-${infants}-${tripType}-${classType}`;
+    
+    if (cachedResults) {
+      try {
+        const parsed = JSON.parse(cachedResults);
+        if (parsed.key === cacheKey && parsed.results && parsed.results.length > 0) {
+          // Use cached results instead of searching again
+          setSearchResults(parsed.results);
+          setIsMockData(parsed.isMockData || false);
+          setIsSearching(false);
+          return;
+        }
+      } catch (e) {
+        // Invalid cache, continue with fresh search
+      }
+    }
+    
+    // Perform fresh search when component mounts
     performSearch();
   }, []);
 
@@ -75,6 +94,14 @@ export function SearchResultsPage() {
         setSearchResults(response.flights);
         setSearchError(null);
         setIsMockData(response.isMockData || false);
+        
+        // Cache results for potential return from inquiry page
+        const cacheKey = `${from}-${to}-${departDate}-${returnDate}-${adults}-${children}-${infants}-${tripType}-${classType}`;
+        sessionStorage.setItem('searchResultsCache', JSON.stringify({
+          key: cacheKey,
+          results: response.flights,
+          isMockData: response.isMockData || false
+        }));
         
         // Initialize price range filter based on actual flights
         const prices = response.flights.map(f => f.price);

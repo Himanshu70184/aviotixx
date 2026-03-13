@@ -72,6 +72,7 @@ export interface FlightResult {
   cabinClass: string;
   seats: number;
   aircraftType?: string;
+  isRoundTrip?: boolean; // Flag to identify roundtrip flights
 }
 
 export interface FlightSearchResponse {
