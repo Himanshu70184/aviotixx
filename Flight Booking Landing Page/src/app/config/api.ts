@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 // API Configuration for Aviotixx Backend
 // Backend handles EaseMyTrip credentials and CORS issues
 // Uses environment variables for flexibility across environments
@@ -19,6 +20,9 @@ export const API_CONFIG = {
     flightRePrice: '/flights/re-price',
     flightSeatMap: '/flights/seat-map',
     flightSSR: '/flights/ssr',
+    
+    // Airport Search
+    airports: '/airports',
     
     // Public Content (CMS)
     publicContent: '/public/content',

@@ -168,10 +168,9 @@ export async function searchFlights(params: FlightSearchParams): Promise<FlightS
     };
 
     if (isDemoData) {
-      console.log(`✅ Found ${flights.length} DEMO flights (showing realistic sample data)`);
-      console.log(`📊 Displaying results on Search Results page...`);
+
     } else {
-      console.log(`✅ Found ${flights.length} REAL flights from EaseMyTrip API`);
+
     }
     
     return response;

@@ -195,19 +195,7 @@ export async function transformEaseMyTripResponse(
       const isRoundTrip = hasOutbound && hasInbound;
       const isMultiCity = outboundBonds.length > 1 && !hasInbound; // Multiple OutBound bonds, no InBound
       
-      // Debug logging for bond detection
-      if (hasInbound || outboundBonds.length > 1) {
-        console.log('🔍 [Flight Type Detection]', {
-          journeyIndex,
-          segmentIndex,
-          totalBonds: segment.Bonds.length,
-          bondTypes,
-          outboundBondsCount: outboundBonds.length,
-          inboundBondsCount: inboundBonds.length,
-          isRoundTrip,
-          isMultiCity,
-        });
-      }
+
       
       if (isRoundTrip) {
         // Create ONE combined flight for the roundtrip
@@ -215,13 +203,7 @@ export async function transformEaseMyTripResponse(
           const outboundBond = segment.Bonds.find(bond => bond.BoundType === 'OutBound');
           const inboundBond = segment.Bonds.find(bond => bond.BoundType === 'InBound');
           
-          console.log('🔄 [Roundtrip Processing]', {
-            outboundBond: !!outboundBond,
-            inboundBond: !!inboundBond,
-            outboundLegs: outboundBond?.Legs?.length,
-            inboundLegs: inboundBond?.Legs?.length,
-            segmentKey: segment.ItineraryKey
-          });
+
           
           if (!outboundBond) return null;
           
@@ -334,12 +316,7 @@ export async function transformEaseMyTripResponse(
             isMultiCity: false,
           };
 
-          console.log('✅ [Roundtrip Created]', {
-            hasOutbound: roundtripFlight.outbound?.length > 0,  
-            hasInbound: roundtripFlight.inbound && roundtripFlight.inbound.length > 0,
-            inboundCount: roundtripFlight.inbound?.length || 0,
-            isRoundTrip: roundtripFlight.isRoundTrip
-          });
+
 
           return roundtripFlight;
         })();

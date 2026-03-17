@@ -15,7 +15,7 @@ export async function getCMSContent(forceRefresh = false): Promise<CMSContent | 
   
   // Return cached content if available and not expired
   if (!forceRefresh && contentCache && (now - lastFetchTime) < CACHE_DURATION) {
-    console.log('📦 Using cached CMS content');
+
     return contentCache;
   }
 

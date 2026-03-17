@@ -80,6 +80,8 @@ app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', authenticateAdmin, adminRoutes);
 app.use('/api/flights', flightRoutes);
+import airportRoutes from './routes/airportRoutes.js';
+app.use('/api/airports', airportRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api', uploadRoutes);
 app.get('/api/server-ip', async (req, res) => {

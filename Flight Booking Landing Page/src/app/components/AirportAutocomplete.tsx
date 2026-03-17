@@ -1,7 +1,7 @@
 // Airport Autocomplete Input Component
 import { useState, useRef, useEffect } from 'react';
 import { MapPin, Plane, Loader2 } from 'lucide-react';
-import { searchAirports, getPopularAirports, getAirportDetails } from '../data/airports';
+import { searchAirports } from '../data/airports';
 
 interface AirportAutocompleteProps {
   value: string;
@@ -10,6 +10,7 @@ interface AirportAutocompleteProps {
   icon?: 'mappin' | 'plane';
   region?: 'US' | 'INDIA' | 'HUBS' | 'ALL';
   label: string;
+  excludeAirport?: string; // IATA code to exclude from suggestions
 }
 
 export function AirportAutocomplete({ 
@@ -18,7 +19,8 @@ export function AirportAutocomplete({
   placeholder, 
   icon = 'mappin',
   region = 'ALL',
-  label 
+  label,
+  excludeAirport
 }: AirportAutocompleteProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -30,35 +32,32 @@ export function AirportAutocomplete({
   // Format display text to show both code and city name
   const getDisplayText = (airportCode: string): string => {
     if (!airportCode) return '';
-    const airport = getAirportDetails(airportCode);
-    return `${airport.code} - ${airport.city}`;
+    const found = suggestions.find(a => a.code === airportCode.toUpperCase());
+    if (found) return `${found.code} - ${found.city}`;
+    return airportCode;
   };
 
   useEffect(() => {
     async function loadAirports() {
       try {
+        setIsLoading(true);
         const query = searchQuery || (value && value.length <= 3 ? value : '');
+        
         if (query.length > 0) {
-          // For immediate results, always show local search first
-          const results = await searchAirports(query, region);
+          const results = await searchAirports(query, region, excludeAirport);
           setSuggestions(results);
         } else {
-          // Show popular airports when empty
-          const popular = getPopularAirports(region);
-          setSuggestions(popular);
+          setSuggestions([]);
         }
       } catch (error) {
         console.warn('Airport search failed:', error);
-        // Fallback logic is built into searchAirports now
-        setSuggestions(getPopularAirports(region));
+        setSuggestions([]);
       } finally {
         setIsLoading(false);
       }
     }
-    
-    setIsLoading(true);
     loadAirports();
-  }, [searchQuery, region, value]);
+  }, [searchQuery, region, value, excludeAirport]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -92,6 +91,30 @@ export function AirportAutocomplete({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Allow Enter to accept manual IATA code input
+    if (e.key === 'Enter' && searchQuery.length === 3) {
+      e.preventDefault();
+      const upperCode = searchQuery.toUpperCase();
+      onChange(upperCode);
+      setSearchQuery('');
+      setIsFocused(false);
+    }
+  };
+
+  const handleBlur = () => {
+    // Small delay to allow click on suggestions
+    setTimeout(() => {
+      // If user typed a 3-letter code and lost focus, accept it as IATA code
+      if (searchQuery.length === 3 && !value) {
+        const upperCode = searchQuery.toUpperCase();
+        onChange(upperCode);
+        setSearchQuery('');
+      }
+      setIsFocused(false);
+    }, 150);
+  };
+
   const IconComponent = icon === 'plane' ? Plane : MapPin;
 
   return (
@@ -106,10 +129,8 @@ export function AirportAutocomplete({
         value={isFocused ? searchQuery : getDisplayText(value)}
         onChange={(e) => handleInputChange(e.target.value)}
         onFocus={handleFocus}
-        onBlur={() => {
-          // Small delay to allow click on suggestions
-          setTimeout(() => setIsFocused(false), 150);
-        }}
+        onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
         className="w-full pl-8 pr-2 py-2.5 text-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent text-gray-900 transition-all bg-white/80 backdrop-blur-sm placeholder:text-gray-500 relative z-20"
         maxLength={50}
         autoComplete="off"
@@ -159,10 +180,16 @@ export function AirportAutocomplete({
                 </div>
               )}
               
-              {value.length > 0 && suggestions.length === 0 && !isLoading && (
+              {searchQuery.length > 0 && suggestions.length === 0 && !isLoading && (
                 <div className="px-3 py-4 text-center">
-                  <p className="text-sm text-gray-600">No airports found for "{value}"</p>
-                  <p className="text-xs text-gray-500 mt-1">Try searching by city name or airport code</p>
+                  <p className="text-sm text-gray-600">No airports found for "{searchQuery}"</p>
+                  {searchQuery.length === 3 ? (
+                    <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                      <p className="text-xs text-blue-700 font-medium">✈️ Press Enter to use "{searchQuery.toUpperCase()}" as IATA code</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500 mt-1">Try a 3-letter IATA code (e.g., JFK, LAX, DEL) or city name</p>
+                  )}
                 </div>
               )}
             </>

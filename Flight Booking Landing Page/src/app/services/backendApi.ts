@@ -194,14 +194,14 @@ async function fetchWithCORSFallback(url: string, options: RequestInit): Promise
   try {
     const response = await fetch(url, options);
     // Only log success in production
-    console.log('✅ Connected to live API');
+
     return response;
   } catch (directError) {
     // Try 2: CORS Proxy (silent fallback)
     try {
       const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
       const response = await fetch(corsProxyUrl, options);
-      console.log('✅ Connected to live API via proxy');
+
       return response;
     } catch (proxyError) {
       // Both failed - will use demo mode (logged later)
@@ -222,7 +222,7 @@ export async function searchFlights(request: FlightSearchRequest): Promise<Fligh
   }
   
   try {
-    console.log('🔍 [DEBUG] Starting flight search...');
+
     console.log('📍 [DEBUG] API URL:', `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.flightSearch}`);
     console.log('📦 [DEBUG] Request payload:', JSON.stringify(request, null, 2));
     

@@ -120,14 +120,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
       ? multiCitySegments.filter(segment => segment.from && segment.to && segment.departDate)
       : multiCitySegments;
 
-    // Debug logging for multicity
-    if (tripType === 'multicity') {
-      console.log('🔍 Multicity Debug Info:');
-      console.log('Total segments in form:', multiCitySegments.length);
-      console.log('All segments:', multiCitySegments);
-      console.log('Valid/completed segments:', activeSegments.length);
-      console.log('Active segments being submitted:', activeSegments);
-    }
+
 
     // Build API payload based on trip type
     let flightSearchDetails;
@@ -206,8 +199,7 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
       onSearch(apiPayload);
     }
 
-    // Log API payload for debugging
-    console.log('Flight Search API Payload:', JSON.stringify(apiPayload, null, 2));
+
   };
 
   return (
@@ -399,18 +391,20 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                     <AirportAutocomplete
                       value={segment.from}
                       onChange={(value) => updateSegment(index, 'from', value)}
-                      placeholder="Origin"
+                      placeholder="Origin or IATA code"
                       icon="mappin"
                       region="ALL"
                       label="From"
+                      excludeAirport={segment.to}
                     />
                     <AirportAutocomplete
                       value={segment.to}
                       onChange={(value) => updateSegment(index, 'to', value)}
-                      placeholder="Destination"
+                      placeholder="Destination or IATA code"
                       icon="plane"
                       region="ALL"
                       label="To"
+                      excludeAirport={segment.from}
                     />
                   </div>
 
@@ -480,20 +474,22 @@ export function FlightSearchForm({ onSearch, compact = false }: FlightSearchForm
                 <AirportAutocomplete
                   value={formData.from}
                   onChange={(value) => setFormData({ ...formData, from: value })}
-                  placeholder="JFK"
+                  placeholder="JFK, New York, or city"
                   icon="mappin"
                   region="ALL"
                   label="From"
+                  excludeAirport={formData.to}
                 />
 
                 {/* To - with Autocomplete */}
                 <AirportAutocomplete
                   value={formData.to}
                   onChange={(value) => setFormData({ ...formData, to: value })}
-                  placeholder="DEL"
+                  placeholder="DEL, Delhi, or city"
                   icon="plane"
                   region="ALL"
                   label="To"
+                  excludeAirport={formData.from}
                 />
               </div>
 

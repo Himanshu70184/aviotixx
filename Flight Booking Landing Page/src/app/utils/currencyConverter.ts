@@ -42,7 +42,7 @@ async function getINRtoUSDRate(): Promise<number> {
         timestamp: Date.now()
       };
 
-      console.log(`💱 Updated INR to USD rate: ₹1 = $${rate.toFixed(4)}`);
+
       return rate;
     }
   } catch (error) {
@@ -58,7 +58,7 @@ async function getINRtoUSDRate(): Promise<number> {
     timestamp: Date.now() - (CACHE_DURATION - 5 * 60 * 1000) // Cache for only 5 more minutes
   };
 
-  console.log(`💱 Using fallback INR to USD rate: ₹1 = $${fallbackRate.toFixed(4)}`);
+
   return fallbackRate;
 }
 

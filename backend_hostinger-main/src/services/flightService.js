@@ -11,11 +11,6 @@ const validateEnvVariables = () => {
   const missing = required.filter(env => !process.env[env]);
  
   if (missing.length > 0) {
-    console.error('❌ MISSING ENV VARIABLES:', missing);
-    console.log('Available env vars:');
-    console.log('  EASEMYTRIP_USERNAME:', process.env.EASEMYTRIP_USERNAME ? '***LOADED***' : 'MISSING');
-    console.log('  EASEMYTRIP_PASSWORD:', process.env.EASEMYTRIP_PASSWORD ? '***LOADED***' : 'MISSING');
-    console.log('  EASEMYTRIP_IP:', process.env.EASEMYTRIP_IP || 'MISSING');
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
 };
@@ -70,12 +65,7 @@ export const searchFlights = async (searchParams) => {
       'IpAddress': process.env.EASEMYTRIP_IP,
     };
  
-    console.log('Sending Flight Search Request:', JSON.stringify(requestPayload, null, 2));
-    console.log('Auth Headers:', {
-      UserName: authHeaders.UserName,
-      Password: authHeaders.Password ? '***' : 'MISSING',
-      IpAddress: authHeaders.IpAddress
-    });
+
  
     const response = await fetch(`${EASEMYTRIP_API_URL}/FlightSearch`, {
       method: 'POST',
@@ -127,7 +117,7 @@ export const rePriceFlights = async (rePriceParams) => {
       SegmentId: segmentId,
     };
  
-    console.log('Sending Flight Re-Price Request:', JSON.stringify(requestPayload, null, 2));
+
  
     const response = await fetch(`${EASEMYTRIP_API_URL}/AirRePriceRQ`, {
       method: 'POST',
@@ -184,7 +174,7 @@ export const getSeatMap = async (seatMapParams) => {
       SegmentId: segmentId,
     };
  
-    console.log('Sending Get Seat Map Request:', JSON.stringify(requestPayload, null, 2));
+
  
     const response = await fetch(`${EASEMYTRIP_API_URL}/GetSeatMap`, {
       method: 'POST',
@@ -241,7 +231,7 @@ export const getSSRAvailability = async (ssrParams) => {
       SegmentId: segmentId,
     };
  
-    console.log('Sending SSR Availability Request:', JSON.stringify(requestPayload, null, 2));
+
  
     const response = await fetch(`${EASEMYTRIP_API_URL}/SSRAvailabilityV2`, {
       method: 'POST',
