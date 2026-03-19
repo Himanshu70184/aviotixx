@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { FileText, MessageSquare, HelpCircle, Send, TrendingUp, Phone } from 'lucide-react';
+import { FileText, MessageSquare, HelpCircle, Send, TrendingUp, Phone, Clock } from 'lucide-react';
 import { getBlogs, getTestimonials, getFaqs, getInquiries, getSettings } from '../../services/adminApi';
 
 export function AdminDashboardPage() {
-  const [stats, setStats] = useState({ blogs: 0, testimonials: 0, faqs: 0, inquiries: 0 });
+  const [stats, setStats] = useState({ blogs: 0, testimonials: 0, faqs: 0, inquiries: 0, pending: 0, confirmed: 0 });
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -11,11 +11,19 @@ export function AdminDashboardPage() {
     Promise.allSettled([
       getBlogs(), getTestimonials(), getFaqs(), getInquiries(), getSettings()
     ]).then(([blogs, testimonials, faqs, inquiries, settings]) => {
+      let total = 0, pending = 0, confirmed = 0;
+      if (inquiries.status === 'fulfilled') {
+        total = inquiries.value.length;
+        pending = inquiries.value.filter((inq: any) => inq.status === 'pending').length;
+        confirmed = inquiries.value.filter((inq: any) => inq.status === 'confirmed').length;
+      }
       setStats({
         blogs: blogs.status === 'fulfilled' ? blogs.value.length : 0,
         testimonials: testimonials.status === 'fulfilled' ? testimonials.value.length : 0,
         faqs: faqs.status === 'fulfilled' ? faqs.value.length : 0,
-        inquiries: inquiries.status === 'fulfilled' ? inquiries.value.length : 0,
+        inquiries: total,
+        pending,
+        confirmed
       });
       if (settings.status === 'fulfilled') {
         setPhone(settings.value.contact?.phoneDisplay || '');
@@ -24,12 +32,7 @@ export function AdminDashboardPage() {
     });
   }, []);
 
-  const cards = [
-    { label: 'Blog Posts', value: stats.blogs, icon: FileText, color: 'bg-blue-500' },
-    { label: 'Testimonials', value: stats.testimonials, icon: MessageSquare, color: 'bg-green-500' },
-    { label: 'FAQs', value: stats.faqs, icon: HelpCircle, color: 'bg-purple-500' },
-    { label: 'Inquiries', value: stats.inquiries, icon: Send, color: 'bg-orange-500' },
-  ];
+
 
   return (
     <div>
@@ -38,22 +41,113 @@ export function AdminDashboardPage() {
         <p className="text-gray-500 text-sm mt-1">Overview of your Aviotixx content</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {cards.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-3">
-              <div className={`${color} w-10 h-10 rounded-lg flex items-center justify-center`}>
-                <Icon className="w-5 h-5 text-white" />
+
+      {/* Booking Details - Main Focus */}
+      <div className="mb-10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
+          <h2 className="text-2xl font-bold text-gray-800">Flight Booking Overview</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Total Inquiries Card */}
+          <div className="lg:col-span-1 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-6 border border-blue-200 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-blue-500 w-12 h-12 rounded-lg flex items-center justify-center shadow-lg">
+                <Send className="w-6 h-6 text-white" />
               </div>
-              <TrendingUp className="w-4 h-4 text-gray-300" />
+              <span className="text-xs text-blue-600 bg-blue-200 px-2 py-1 rounded-full font-medium">Total</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">
-              {loading ? <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" /> : value}
+            <div className="text-3xl font-bold text-gray-800 mb-1">
+              {loading ? <div className="h-8 w-16 bg-blue-200 rounded animate-pulse" /> : stats.inquiries}
             </div>
-            <p className="text-sm text-gray-500 mt-1">{label}</p>
+            <p className="text-blue-700 font-medium">Flight Inquiries</p>
           </div>
-        ))}
+
+          {/* Pending Card */}
+          <div className="lg:col-span-1 bg-gradient-to-br from-amber-50 to-orange-100 rounded-xl p-6 border border-amber-200 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-amber-500 w-12 h-12 rounded-lg flex items-center justify-center shadow-lg">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs text-amber-600 bg-amber-200 px-2 py-1 rounded-full font-medium">Pending</span>
+            </div>
+            <div className="text-3xl font-bold text-gray-800 mb-1">
+              {loading ? <div className="h-8 w-16 bg-amber-200 rounded animate-pulse" /> : stats.pending}
+            </div>
+            <p className="text-amber-700 font-medium">Awaiting Review</p>
+          </div>
+
+          {/* Confirmed Card */}
+          <div className="lg:col-span-1 bg-gradient-to-br from-emerald-50 to-green-100 rounded-xl p-6 border border-emerald-200 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-emerald-500 w-12 h-12 rounded-lg flex items-center justify-center shadow-lg">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-xs text-emerald-600 bg-emerald-200 px-2 py-1 rounded-full font-medium">Confirmed</span>
+            </div>
+            <div className="text-3xl font-bold text-gray-800 mb-1">
+              {loading ? <div className="h-8 w-16 bg-emerald-200 rounded animate-pulse" /> : stats.confirmed}
+            </div>
+            <p className="text-emerald-700 font-medium">Bookings Ready</p>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mt-6 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-700">Inquiry Status</h3>
+            <span className="text-xs text-gray-500">
+              {stats.inquiries > 0 ? Math.round((stats.confirmed / stats.inquiries) * 100) : 0}% Confirmed
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-gradient-to-r from-blue-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
+              style={{ 
+                width: stats.inquiries > 0 ? `${(stats.confirmed / stats.inquiries) * 100}%` : '0%' 
+              }}
+            ></div>
+          </div>
+          <div className="flex justify-between mt-2 text-xs text-gray-500">
+            <span>0</span>
+            <span>{stats.inquiries} Total</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Site Details - Less Prominent */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-gray-400 mb-3">Site Details</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="bg-blue-500 w-8 h-8 rounded flex items-center justify-center">
+                <FileText className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-bold text-gray-900">{loading ? <div className="h-6 w-6 bg-gray-200 rounded animate-pulse" /> : stats.blogs}</span>
+            </div>
+            <p className="text-xs text-gray-500">Blog Posts</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="bg-green-500 w-8 h-8 rounded flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-bold text-gray-900">{loading ? <div className="h-6 w-6 bg-gray-200 rounded animate-pulse" /> : stats.testimonials}</span>
+            </div>
+            <p className="text-xs text-gray-500">Testimonials</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow border border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="bg-purple-500 w-8 h-8 rounded flex items-center justify-center">
+                <HelpCircle className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-bold text-gray-900">{loading ? <div className="h-6 w-6 bg-gray-200 rounded animate-pulse" /> : stats.faqs}</span>
+            </div>
+            <p className="text-xs text-gray-500">FAQs</p>
+          </div>
+        </div>
       </div>
 
       {/* Phone Number Quick Info */}

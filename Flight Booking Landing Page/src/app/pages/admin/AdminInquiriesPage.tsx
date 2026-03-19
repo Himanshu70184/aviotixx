@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Loader2, Mail, Phone, Plane, Search, Eye, Trash2, Filter } from 'lucide-react';
 import { getInquiries, updateInquiry, deleteInquiry, type FlightInquiry } from '../../services/adminApi';
 
@@ -29,13 +30,13 @@ interface FilterState {
 }
 
 export function AdminInquiriesPage() {
+  const navigate = useNavigate();
   const [inquiries, setInquiries] = useState<FlightInquiry[]>([]);
   const [filteredInquiries, setFilteredInquiries] = useState<FlightInquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [selectedInquiry, setSelectedInquiry] = useState<FlightInquiry | null>(null);
   const [showFilters, setShowFilters] = useState(true);
 
   const [filters, setFilters] = useState<FilterState>({
@@ -163,7 +164,7 @@ export function AdminInquiriesPage() {
   };
 
   const handleView = (inquiry: FlightInquiry) => {
-    setSelectedInquiry(inquiry);
+    navigate(`/admin/inquiries/${inquiry._id}`);
   };
 
   return (
@@ -352,11 +353,23 @@ export function AdminInquiriesPage() {
             {/* Table Body */}
             <div className="divide-y divide-gray-200">
               {filteredInquiries.map((inquiry, index) => (
-                <div key={inquiry._id} className="px-6 py-4 hover:bg-gray-50">
+                <div
+                  key={inquiry._id}
+                  className={`px-6 py-4 hover:bg-gray-50 ${
+                    inquiry.status === 'confirmed'
+                      ? 'bg-green-50'
+                      : (index % 2 === 0 ? 'bg-gray-50' : 'bg-white')
+                  }`}
+                >
                   <div className="grid grid-cols-12 gap-4 text-sm items-center">
                     <div className="col-span-1 font-medium text-gray-900">{index + 1}</div>
                     <div className="col-span-1 font-medium text-blue-600">
-                      {inquiry.inquiryId || inquiry._id.slice(-6).toUpperCase()}
+                      {/* Truncate ID with ellipsis and show tooltip */}
+                      <span title={inquiry.inquiryId || inquiry._id} style={{ cursor: 'pointer' }}>
+                        {(inquiry.inquiryId || inquiry._id).length > 10
+                          ? (inquiry.inquiryId || inquiry._id).slice(0, 10) + '...'
+                          : (inquiry.inquiryId || inquiry._id)}
+                      </span>
                     </div>
                     <div className="col-span-1 text-gray-900">
                       {inquiry.origin}
@@ -386,11 +399,20 @@ export function AdminInquiriesPage() {
                       {updating === inquiry._id ? (
                         <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                       ) : (
-                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-md border ${STATUS_COLORS[inquiry.status] || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
-                          {inquiry.status === 'confirmed' ? 'Confirmed' : 
-                           inquiry.status === 'pending' ? 'Pending' :
-                           inquiry.status.charAt(0).toUpperCase() + inquiry.status.slice(1)}
-                        </span>
+                        inquiry.status === 'pending' ? (
+                          <span
+                            className={`inline-block px-2 py-1 text-xs font-medium rounded-md border cursor-pointer ${STATUS_COLORS[inquiry.status] || 'bg-gray-100 text-gray-800 border-gray-200'}`}
+                            title="Click to confirm"
+                            onClick={() => handleStatusChange(inquiry._id, 'confirmed')}
+                          >
+                            Pending
+                          </span>
+                        ) : (
+                          <span className={`inline-block px-2 py-1 text-xs font-medium rounded-md border ${STATUS_COLORS[inquiry.status] || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                            {inquiry.status === 'confirmed' ? 'Confirmed' :
+                              inquiry.status.charAt(0).toUpperCase() + inquiry.status.slice(1)}
+                          </span>
+                        )
                       )}
                     </div>
                     <div className="col-span-1 flex items-center gap-2">
@@ -421,150 +443,6 @@ export function AdminInquiriesPage() {
           </>
         )}
       </div>
-
-      {/* Inquiry Details Modal */}
-      {selectedInquiry && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Inquiry Details</h2>
-                <button
-                  onClick={() => setSelectedInquiry(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ×
-                </button>
-              </div>
-
-              {/* Inquiry Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-2">📋 Inquiry Information</h3>
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
-                      <div className="grid grid-cols-2 gap-2">
-                        <span className="text-gray-600">ID:</span>
-                        <span className="text-gray-900">{selectedInquiry.inquiryId || selectedInquiry._id.slice(-6).toUpperCase()}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <span className="text-gray-600">From:</span>
-                        <span className="text-gray-900">{selectedInquiry.origin}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <span className="text-gray-600">To:</span>
-                        <span className="text-gray-900">{selectedInquiry.destination}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <span className="text-gray-600">Departure Date:</span>
-                        <span className="text-gray-900">{selectedInquiry.departDate ? new Date(selectedInquiry.departDate).toLocaleDateString() : '-'}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <span className="text-gray-600">Return Date:</span>
-                        <span className="text-gray-900">{selectedInquiry.returnDate ? new Date(selectedInquiry.returnDate).toLocaleDateString() : '-'}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <span className="text-gray-600">Trip Type:</span>
-                        <span className="text-gray-900">{TRIP_TYPES[selectedInquiry.tripType] || 'One Way'}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <span className="text-gray-600">Cabin Type:</span>
-                        <span className="text-gray-900">{CABINS[selectedInquiry.cabin] || 'Economy'}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <span className="text-gray-600">Total Travellers:</span>
-                        <span className="text-gray-900">{selectedInquiry.adults + selectedInquiry.children + selectedInquiry.infants}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <span className="text-gray-600">Created On:</span>
-                        <span className="text-gray-900">{new Date(selectedInquiry.createdAt).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-2">📞 Contact Information</h3>
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
-                      <div className="grid grid-cols-2 gap-2">
-                        <span className="text-gray-600">Email:</span>
-                        <span className="text-gray-900">{selectedInquiry.passengerEmail}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <span className="text-gray-600">Phone Number:</span>
-                        <span className="text-gray-900">{selectedInquiry.passengerPhone}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status Update */}
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-2">📊 Status Management</h3>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <select
-                        value={selectedInquiry.status}
-                        onChange={(e) => handleStatusChange(selectedInquiry._id, e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        {STATUSES.map(status => (
-                          <option key={status} value={status}>
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Passenger Details */}
-              {selectedInquiry.passengers && selectedInquiry.passengers.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">👥 Passenger Details</h3>
-                  <div className="bg-gray-50 rounded-lg p-4 overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left py-2">#</th>
-                          <th className="text-left py-2">First Name</th>
-                          <th className="text-left py-2">Middle Name</th>
-                          <th className="text-left py-2">Last Name</th>
-                          <th className="text-left py-2">Gender</th>
-                          <th className="text-left py-2">Date of Birth</th>
-                          <th className="text-left py-2">Passport Number</th>
-                          <th className="text-left py-2">Meal Type</th>
-                          <th className="text-left py-2">Seat Type</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedInquiry.passengers.map((passenger, index) => (
-                          <tr key={index} className="border-b border-gray-100">
-                            <td className="py-2">{index + 1}</td>
-                            <td className="py-2">{passenger.firstName}</td>
-                            <td className="py-2">{passenger.middleName || 'N/A'}</td>
-                            <td className="py-2">{passenger.lastName}</td>
-                            <td className="py-2">{passenger.gender}</td>
-                            <td className="py-2">
-                              {passenger.dateOfBirth ? 
-                                `${passenger.dateOfBirth.day}/${passenger.dateOfBirth.month}/${passenger.dateOfBirth.year}` : 
-                                'N/A'
-                              }
-                            </td>
-                            <td className="py-2">{passenger.passportNumber || 'N/A'}</td>
-                            <td className="py-2">{passenger.mealPreference || 'N/A'}</td>
-                            <td className="py-2">{passenger.seatPreference || 'N/A'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

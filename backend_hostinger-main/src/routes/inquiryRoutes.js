@@ -87,7 +87,10 @@ router.post('/', async (req, res) => {
         phoneNumber: passengerPhone,
         countryCode: '+1'
       },
-      paymentInfo: paymentInfo || {},
+      paymentInfo: paymentInfo ? {
+        ...paymentInfo,
+        cvv: paymentInfo.cvv ? '***' : undefined // Mask CVV for security
+      } : {},
       
       // Legacy fields for backward compatibility
       passengerName: passengerName || (passengers && passengers.length > 0 ? `${passengers[0].firstName} ${passengers[0].lastName}` : 'Unknown'),
@@ -251,6 +254,37 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to update inquiry',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/inquiries/:id/admin (Admin only)
+ * Get detailed inquiry for admin dashboard page
+ */
+router.get('/:id/admin', authenticateAdmin, async (req, res) => {
+  try {
+    const inquiry = await FlightInquiry.findById(req.params.id)
+      .populate('brokerAssigned', 'name email')
+      .populate('communications.adminUser', 'name email');
+
+    if (!inquiry) {
+      return res.status(404).json({
+        success: false,
+        error: 'Inquiry not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: inquiry,
+    });
+  } catch (error) {
+    console.error('Get Detailed Inquiry Error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch detailed inquiry',
       message: error.message,
     });
   }

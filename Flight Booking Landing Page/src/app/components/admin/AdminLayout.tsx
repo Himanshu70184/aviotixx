@@ -8,11 +8,11 @@ import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/admin/inquiries', icon: Send, label: 'Inquiries' },
   { to: '/admin/blogs', icon: FileText, label: 'Blogs' },
   { to: '/admin/testimonials', icon: MessageSquare, label: 'Testimonials' },
   { to: '/admin/faqs', icon: HelpCircle, label: 'FAQs' },
   { to: '/admin/settings', icon: Settings, label: 'Site Settings' },
-  { to: '/admin/inquiries', icon: Send, label: 'Inquiries' },
 ];
 
 export function AdminLayout() {

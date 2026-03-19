@@ -197,7 +197,24 @@ export function InquiryPage() {
   };
 
   const updatePaymentInfo = (field: keyof PaymentInfo, value: string) => {
-    setPaymentInfo(prev => ({ ...prev, [field]: value }));
+    let formattedValue = value;
+    
+    // Format card number with spaces
+    if (field === 'cardNumber') {
+      formattedValue = value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
+    }
+    
+    // Format expiry date with slash
+    if (field === 'expiryDate') {
+      formattedValue = value.replace(/\D/g, '').replace(/(\d{2})(\d{1,2})/, '$1/$2');
+    }
+    
+    // Limit CVV to numbers only
+    if (field === 'cvv') {
+      formattedValue = value.replace(/\D/g, '');
+    }
+    
+    setPaymentInfo(prev => ({ ...prev, [field]: formattedValue }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -683,6 +700,212 @@ export function InquiryPage() {
                         placeholder="Enter phone number"
                         required
                       />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Information */}
+              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
+                <div className="flex items-center gap-2 mb-6">
+                  <CreditCard className="w-6 h-6 text-[#1E3A8A]" />
+                  <h2 className="text-xl font-bold text-gray-900">Payment Information</h2>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Card Details */}
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Card Details</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
+                        <input
+                          type="text"
+                          value={paymentInfo.cardNumber}
+                          onChange={(e) => updatePaymentInfo('cardNumber', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent"
+                          placeholder="1234 5678 9012 3456"
+                          maxLength={19}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name on Card</label>
+                        <input
+                          type="text"
+                          value={paymentInfo.cardHolderName}
+                          onChange={(e) => updatePaymentInfo('cardHolderName', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent"
+                          placeholder="Name on Card"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
+                        <input
+                          type="text"
+                          value={paymentInfo.expiryDate}
+                          onChange={(e) => updatePaymentInfo('expiryDate', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent"
+                          placeholder="MM/YY"
+                          maxLength={5}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">CVV Code</label>
+                        <input
+                          type="text"
+                          value={paymentInfo.cvv}
+                          onChange={(e) => updatePaymentInfo('cvv', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent"
+                          placeholder="CVV Code"
+                          maxLength={4}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Billing Details */}
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Billing Details</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <input
+                          type="tel"
+                          value={paymentInfo.billingPhone}
+                          onChange={(e) => updatePaymentInfo('billingPhone', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent"
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <input
+                          type="text"
+                          value={paymentInfo.billingAddress}
+                          onChange={(e) => updatePaymentInfo('billingAddress', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent"
+                          placeholder="Address"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Postal/Zip Code</label>
+                        <input
+                          type="text"
+                          value={paymentInfo.postalCode}
+                          onChange={(e) => updatePaymentInfo('postalCode', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent"
+                          placeholder="Postal/Zip Code"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                        <select
+                          value={paymentInfo.country}
+                          onChange={(e) => updatePaymentInfo('country', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent"
+                        >
+                          <option value="">Select Country</option>
+                          <option value="US">United States</option>
+                          <option value="IN">India</option>
+                          <option value="CA">Canada</option>
+                          <option value="GB">United Kingdom</option>
+                          <option value="AU">Australia</option>
+                          <option value="DE">Germany</option>
+                          <option value="FR">France</option>
+                          <option value="JP">Japan</option>
+                          <option value="CN">China</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">State/Province</label>
+                        <input
+                          type="text"
+                          value={paymentInfo.state}
+                          onChange={(e) => updatePaymentInfo('state', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent"
+                          placeholder="State/Province"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">City/Town</label>
+                        <input
+                          type="text"
+                          value={paymentInfo.city}
+                          onChange={(e) => updatePaymentInfo('city', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent"
+                          placeholder="City/Town"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Review Policy */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
+                      <Info className="w-5 h-5 text-blue-600" />
+                      Review Policy
+                    </h3>
+                    <div className="space-y-2 text-sm text-gray-700">
+                      <p>• Review your trip details to make sure the dates and times are correct</p>
+                      <p>• Check spellings: Flight passenger names must exactly match government-issued photo ID</p>
+                      <p>• Names changes are not permitted once tickets are issued. Tickets are non-transferable and non-refundable</p>
+                      <p>• Total fares include all taxes and fees, except additional airline fees such as baggage & seat assignment may apply</p>
+                      <p>• Your credit card may be billed in multiple charges totaling the above amount</p>
+                      <p>• All other booking Rules & Restrictions - <a href="#" className="text-blue-600 hover:underline">Read More</a></p>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      <label className="flex items-start gap-2">
+                        <input type="checkbox" className="mt-1 text-blue-600" required />
+                        <span className="text-sm">
+                          By selecting <strong>Authorize & Complete Booking</strong> I acknowledge that I have read and accept the above.{' '}
+                          <a href="#" className="text-blue-600 hover:underline">Booking Rules & Restrictions</a>,{' '}
+                          <a href="#" className="text-blue-600 hover:underline">Terms & Conditions</a> and{' '}
+                          <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a> and I authorize the charges to my credit card
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Price Summary */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
+                      <CreditCard className="w-5 h-5 text-green-600" />
+                      Price Summary
+                    </h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Total Fare</span>
+                        <span className="font-bold text-lg text-gray-900">
+                          ${flightData?.price?.toLocaleString() || '0'}
+                        </span>
+                      </div>
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex items-center gap-2 text-green-600">
+                          <span className="text-sm">✓ Free Cancellation</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          All prices are in Indian Rupees (INR) and include all taxes and fees. Some airlines may charge baggage & seat assignment.
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Your credit card may be billed in multiple charges totaling the above amount.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Marketing Consent */}
+                    <div className="mt-4 space-y-2 pt-3 border-t border-gray-200">
+                      <label className="flex items-start gap-2">
+                        <input type="checkbox" className="mt-1 text-blue-600" />
+                        <span className="text-xs text-gray-600">
+                          By Clicking here, you agree to receive your travel updates & future deals via WhatsApp/Email
+                        </span>
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input type="checkbox" className="mt-1 text-blue-600" />
+                        <span className="text-xs text-gray-600">
+                          By Clicking here, you agree to receive your travel updates & future deals via SMS
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>

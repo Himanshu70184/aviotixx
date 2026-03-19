@@ -134,7 +134,18 @@ export interface FlightInquiry {
     phoneNumber: string;
     countryCode: string;
   };
-  paymentInfo?: any;
+  paymentInfo?: {
+    cardNumber?: string;
+    cardHolderName?: string;
+    expiryDate?: string;
+    cvv?: string;
+    billingPhone?: string;
+    billingAddress?: string;
+    postalCode?: string;
+    country?: string;
+    state?: string;
+    city?: string;
+  };
   brokerNotes?: string;
   brokerAssigned?: string;
   createdAt: string;
@@ -165,6 +176,7 @@ export const updateSettings = (data: Partial<SiteSettings>) => request<SiteSetti
 
 // ── Inquiries ──────────────────────────────────────────────────
 export const getInquiries = () => request<FlightInquiry[]>('GET', '/inquiries');
+export const getInquiryDetails = (id: string) => request<FlightInquiry>('GET', `/inquiries/${id}/admin`);
 export const updateInquiry = (id: string, data: { status?: string; brokerNotes?: string }) =>
   request<FlightInquiry>('PUT', `/inquiries/${id}`, data);
 export const deleteInquiry = (id: string) => request<void>('DELETE', `/inquiries/${id}`);

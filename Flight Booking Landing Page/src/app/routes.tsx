@@ -10,6 +10,7 @@ import { AdminTestimonialsPage } from './pages/admin/AdminTestimonialsPage';
 import { AdminFaqsPage } from './pages/admin/AdminFaqsPage';
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 import { AdminInquiriesPage } from './pages/admin/AdminInquiriesPage';
+import { AdminInquiryDetailsPage } from './pages/admin/AdminInquiryDetailsPage';
 import { RequireAuth } from './components/admin/RequireAuth';
 
 export const router = createBrowserRouter([
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
       { path: 'faqs', element: <AdminFaqsPage /> },
       { path: 'settings', element: <AdminSettingsPage /> },
       { path: 'inquiries', element: <AdminInquiriesPage /> },
+      { path: 'inquiries/:id', element: <AdminInquiryDetailsPage /> },
     ],
   },
   {
