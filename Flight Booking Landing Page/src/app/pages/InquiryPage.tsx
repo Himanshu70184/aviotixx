@@ -18,7 +18,9 @@ import {
 } from 'lucide-react';
 import { FlightResult } from '../services/travelportApi';
 import { getAirlineLogo } from '../utils/airlineLogos';
+
 import { getAirportCity, getAirportName } from '../data/airports';
+import { API_CONFIG } from '../config/api';
 
 interface PassengerInfo {
   id: number;
@@ -277,8 +279,8 @@ export function InquiryPage() {
       };
 
       // Submit to backend
-      const backendUrl = 'http://localhost:4000';
-      const response = await fetch(`${backendUrl}/api/inquiries`, {
+      const backendUrl = API_CONFIG.baseUrl;
+      const response = await fetch(`${backendUrl}/inquiries`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

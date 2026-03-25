@@ -25,36 +25,70 @@ export interface FlightSearchRequest {
 
 export interface FlightSegmentResponse {
   AddonBundle: number;
-  AircraftType: string;
-  Airline: string;
-  AirlineName: string;
-  ArrivalTime: string;
-  DepartureTime: string;
-  Duration: number; // in minutes
-  FlightNumber: string;
-  Origin: string;
-  Destination: string;
-  Seats: number;
-  StopsCount: number;
-  Price: number;
+  BondType: string;
+  Bonds: Array<{
+    BoundType: string;
+    IsBaggageFare: boolean;
+    IsSSR: boolean;
+    ItineraryKey: string;
+    JourneyTime: string;
+    Legs: Array<{
+      AircraftCode: string;
+      AircraftType: string;
+      Airline: string;
+      AirlineName: string;
+      ArrivalTime: string;
+      DepartureTime: string;
+      Duration: number;
+      FlightNumber: string;
+      Origin: string;
+      Destination: string;
+      Seats: number;
+      StopsCount: number;
+      OperatedBy: string | null;
+      [key: string]: any; // For any additional properties
+    }>;
+  }>;
+  Fare: {
+    [key: string]: any; // Flexible fare structure
+  };
+  ItineraryKey: string;
+  SearchId: string;
+  EngineID: number;
+  // Legacy properties (optional for backward compatibility)
+  AircraftType?: string;
+  Airline?: string;
+  AirlineName?: string;
+  ArrivalTime?: string;
+  DepartureTime?: string;
+  Duration?: number;
+  FlightNumber?: string;
+  Origin?: string;
+  Destination?: string;
+  Seats?: number;
+  StopsCount?: number;
+  Price?: number;
 }
 
 export interface JourneyResponse {
-  JourneyId: string;
-  SegmentId: string;
-  Destination: string;
-  Origin: string;
-  JourneyDetail: string;
+  JourneyId?: string;
+  SegmentId?: string;
+  Destination: string | null;
+  Origin: string | null;
+  JourneyDetail: string | null;
   Segments: FlightSegmentResponse[];
+  ItineraryKey?: string;
+  SearchId?: string;
+  EngineID?: number;
 }
 
 export interface FlightSearchResponse {
   success: boolean;
   data?: {
-    Errors: any[];
+    Errors: any[] | null;
     Journeys: JourneyResponse[];
     Insurance: any;
-    RestTime: number;
+    RestTime?: number; // Made optional
     TraceId: string;
   };
   traceId?: string;
@@ -190,21 +224,22 @@ function generateTravelId(): string {
  * Attempt to fetch with CORS proxy fallback
  */
 async function fetchWithCORSFallback(url: string, options: RequestInit): Promise<Response> {
-  // Try 1: Direct connection (silent - no console spam)
+  // Try 1: Direct connection
   try {
     const response = await fetch(url, options);
-    // Only log success in production
-
     return response;
   } catch (directError) {
-    // Try 2: CORS Proxy (silent fallback)
-    try {
-      const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-      const response = await fetch(corsProxyUrl, options);
-
-      return response;
-    } catch (proxyError) {
-      // Both failed - will use demo mode (logged later)
+    // Only use CORS proxy in development
+    if (import.meta.env.DEV) {
+      try {
+        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        const response = await fetch(corsProxyUrl, options);
+        return response;
+      } catch (proxyError) {
+        throw directError;
+      }
+    } else {
+      // In production, do not use CORS proxy
       throw directError;
     }
   }
@@ -626,11 +661,13 @@ function generateMockFlightResponse(request: FlightSearchRequest): FlightSearchR
                 {
                   AircraftCode: airline.code,
                   AircraftType: index % 2 === 0 ? '7M8' : '32N',
+                  Airline: airline.code,
                   AirlineName: airline.name,
                   ArrivalDate: formattedArrivalDate,
                   ArrivalTerminal: '1',
                   ArrivalTime: `${String((departHour + durationHours) % 24).padStart(2, '0')}:${String(durationMins).padStart(2, '0')}`,
                   AvailableSeat: String(Math.floor(5 + Math.random() * 5)),
+                  Seats: Math.floor(5 + Math.random() * 5),
                   BaggageUnit: 'Kgs',
                   BaggageWeight: '15',
                   Baggages: [15, 0, 0],
@@ -642,9 +679,10 @@ function generateMockFlightResponse(request: FlightSearchRequest): FlightSearchR
                   DepartureTerminal: index % 3 === 0 ? '3' : '1D',
                   DepartureTime: `${String(departHour).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
                   Destination: segment.destination,
-                  Duration: journeyTime,
+                  Duration: durationHours * 60 + durationMins,
                   FlightNumber: `${String(Math.floor(100 + Math.random() * 8900))}`,
                   NumberOfStops: String(stops),
+                  StopsCount: stops,
                   Origin: segment.origin,
                   OperatedBy: null,
                 },

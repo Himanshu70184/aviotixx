@@ -180,7 +180,7 @@ export function SearchResultsPage() {
   };
 
   const handleCallNow = (flight: FlightResult) => {
-    const phoneNumber = '+15551234567';
+    const phoneNumber = '+18886714966';
     window.open(`tel:${phoneNumber}`);
   };
 
@@ -285,11 +285,11 @@ export function SearchResultsPage() {
 
             {/* Phone CTA */}
             <button
-              onClick={() => window.location.href = 'tel:+15551234567'}
+              onClick={() => window.location.href = 'tel:+18886714966'}
               className="bg-gradient-to-r from-[#FF6B35] to-[#F7931E] text-white px-5 py-2.5 rounded-full font-semibold text-sm hover:shadow-lg transition-all duration-300 flex items-center gap-2"
             >
               <Phone className="w-4 h-4" />
-              <span className="hidden sm:inline">Call:</span> (555) 123-4567
+              <span className="hidden sm:inline">Call:</span> (1) 888 671-4966
             </button>
           </div>
         </div>
@@ -415,7 +415,7 @@ export function SearchResultsPage() {
                             Try Different Search
                           </button>
                           <button
-                            onClick={() => window.location.href = 'tel:+15551234567'}
+                            onClick={() => window.location.href = 'tel:+18886714966'}
                             className="bg-[#FF6B35] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#e55a28] transition-colors text-sm flex items-center gap-2"
                           >
                             <Phone className="w-4 h-4" />
@@ -466,11 +466,11 @@ export function SearchResultsPage() {
               </p>
             </div>
             <button
-              onClick={() => window.location.href = 'tel:+15551234567'}
+              onClick={() => window.location.href = 'tel:+18886714966'}
               className="bg-gradient-to-r from-[#FF6B35] to-[#F7931E] text-white px-6 py-3 rounded-lg font-bold hover:shadow-xl transition-all duration-300 flex items-center gap-2"
             >
               <Phone className="w-5 h-5" />
-              Call (555) 123-4567 Now
+              Call (1) 888 671-4966 Now
             </button>
           </div>
         </div>

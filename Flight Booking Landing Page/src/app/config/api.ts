@@ -3,7 +3,7 @@
 // Backend handles EaseMyTrip credentials and CORS issues
 // Uses environment variables for flexibility across environments
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://backendhostinger-production.up.railway.app/api';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.aviotix.com/api';
 const corsProxy = import.meta.env.VITE_CORS_PROXY_URL || 'https://corsproxy.io/?';
 
 export const API_CONFIG = {
