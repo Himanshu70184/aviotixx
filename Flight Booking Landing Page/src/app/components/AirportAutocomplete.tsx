@@ -1,7 +1,8 @@
 // Airport Autocomplete Input Component
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { MapPin, Plane, Loader2 } from 'lucide-react';
 import { searchAirports } from '../data/airports';
+import { createPortal } from 'react-dom';
 
 interface AirportAutocompleteProps {
   value: string;
@@ -28,6 +29,33 @@ export function AirportAutocomplete({
   const [searchQuery, setSearchQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  // Position dropdown absolutely at the input using getBoundingClientRect
+  // Helper to update dropdown position
+  const updateDropdownPosition = () => {
+    if (isFocused && (suggestions.length > 0 || isLoading) && inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: 'fixed',
+        left: rect.left,
+        top: rect.bottom + 4, // match mt-1
+        width: rect.width,
+        zIndex: 10000
+      });
+    }
+  };
+
+  useLayoutEffect(() => {
+    updateDropdownPosition();
+    if (isFocused && (suggestions.length > 0 || isLoading)) {
+      window.addEventListener('scroll', updateDropdownPosition, true);
+      window.addEventListener('resize', updateDropdownPosition);
+      return () => {
+        window.removeEventListener('scroll', updateDropdownPosition, true);
+        window.removeEventListener('resize', updateDropdownPosition);
+      };
+    }
+  }, [isFocused, suggestions.length, isLoading]);
 
   // Format display text to show both code and city name
   const getDisplayText = (airportCode: string): string => {
@@ -42,9 +70,17 @@ export function AirportAutocomplete({
       try {
         setIsLoading(true);
         const query = searchQuery || (value && value.length <= 3 ? value : '');
-        
         if (query.length > 0) {
-          const results = await searchAirports(query, region, excludeAirport);
+          let results = await searchAirports(query, region, excludeAirport);
+          // Prioritize exact IATA code matches
+          if (query.length === 3) {
+            const upperQuery = query.toUpperCase();
+            results = results.sort((a, b) => {
+              if (a.code === upperQuery && b.code !== upperQuery) return -1;
+              if (b.code === upperQuery && a.code !== upperQuery) return 1;
+              return 0;
+            });
+          }
           setSuggestions(results);
         } else {
           setSuggestions([]);
@@ -137,10 +173,11 @@ export function AirportAutocomplete({
       />
 
       {/* Autocomplete Dropdown */}
-      {isFocused && (suggestions.length > 0 || isLoading) && (
-        <div 
+      {isFocused && (suggestions.length > 0 || isLoading) && createPortal(
+        <div
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-2xl border border-gray-200 max-h-60 overflow-y-auto z-50 animate-fadeIn"
+          style={dropdownStyle}
+          className="bg-white rounded-lg shadow-2xl border border-gray-200 max-h-60 overflow-y-auto animate-fadeIn"
         >
           {isLoading ? (
             <div className="px-3 py-4 text-center">
@@ -171,7 +208,6 @@ export function AirportAutocomplete({
                   </div>
                 </button>
               ))}
-              
               {value.length === 0 && !isLoading && (
                 <div className="px-3 py-2 bg-gray-50 border-t border-gray-200">
                   <p className="text-[10px] text-gray-500 text-center">
@@ -179,7 +215,6 @@ export function AirportAutocomplete({
                   </p>
                 </div>
               )}
-              
               {searchQuery.length > 0 && suggestions.length === 0 && !isLoading && (
                 <div className="px-3 py-4 text-center">
                   <p className="text-sm text-gray-600">No airports found for "{searchQuery}"</p>
@@ -194,7 +229,8 @@ export function AirportAutocomplete({
               )}
             </>
           )}
-        </div>
+        </div>,
+        document.body
       )}
 
       <style>{`

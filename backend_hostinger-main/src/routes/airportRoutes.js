@@ -8,22 +8,30 @@ router.get('/', async (req, res) => {
   try {
     const { search = '' } = req.query;
     const query = search.trim();
-    let filter = {};
+    let results = [];
     if (query.length > 0) {
       const regex = new RegExp(query, 'i');
-      filter = {
-        $or: [
-          { iata_code: regex },
-          { name: regex },
-          { municipality: regex },
-          { iso_country: regex },
-          { keywords: regex },
-          { ident: regex }
-        ]
-      };
+      // 1. Exact IATA code match (case-insensitive)
+      const iataMatch = await Airport.find({ iata_code: { $regex: `^${query}$`, $options: 'i' } });
+      // 2. Other matches (name, city, etc.), excluding the IATA match
+      const orFilter = [
+        { name: regex },
+        { municipality: regex },
+        { iso_country: regex },
+        { keywords: regex },
+        { ident: regex }
+      ];
+      if (iataMatch.length > 0) {
+        // Exclude the already matched IATA code from the rest
+        orFilter.push({ iata_code: { $nin: iataMatch.map(a => a.iata_code) } });
+      }
+      const otherMatches = await Airport.find({ $or: orFilter }).limit(15 - iataMatch.length);
+      results = [...iataMatch, ...otherMatches];
+    } else {
+      // No query: return empty or popular airports if you wish
+      results = [];
     }
-    const airports = await Airport.find(filter).limit(15);
-    res.json(airports);
+    res.json(results);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }

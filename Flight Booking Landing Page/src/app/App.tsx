@@ -109,8 +109,8 @@ export function LandingPage() {
       {/* Top Offer Bar - Apple/Stripe Inspired Clean Design */}
       <div className={`transition-all duration-500 ${
         isScrolled 
-          ? 'fixed top-0 left-0 right-0 bg-[#1E3A8A] z-50' 
-          : 'absolute top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#1E3A8A]/60 via-[#1E3A8A]/50 to-[#0F2557]/60 backdrop-blur-xl'
+          ? 'fixed top-0 left-0 right-0 bg-[#1E3A8A] z-[12000]' 
+          : 'absolute top-0 left-0 right-0 z-[12000] bg-gradient-to-r from-[#1E3A8A]/60 via-[#1E3A8A]/50 to-[#0F2557]/60 backdrop-blur-xl'
       } border-b border-white/10`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
           <div className="flex items-center justify-center gap-4 text-white">
@@ -137,8 +137,8 @@ export function LandingPage() {
       {/* Header - Sleek Apple/Stripe Style */}
       <header className={`transition-all duration-500 ${
         isScrolled 
-          ? 'fixed top-[40px] left-0 right-0 bg-white/95 backdrop-blur-xl shadow-sm border-b border-gray-200/80 z-50' 
-          : 'absolute top-[40px] left-0 right-0 z-50'
+          ? 'fixed top-[40px] left-0 right-0 bg-white/95 backdrop-blur-xl shadow-sm border-b border-gray-200/80 z-[11000]' 
+          : 'absolute top-[40px] left-0 right-0 z-[11000]'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -225,7 +225,7 @@ export function LandingPage() {
       </header>
 
       {/* HERO - Ultra Compact & Clean - Extends to top */}
-      <section id="search" className="relative bg-gradient-to-br from-[#0A1628] via-[#1E3A8A] to-[#0F2557] text-white pt-32 pb-8 overflow-hidden">
+      <section id="search" className="relative bg-gradient-to-br from-[#0A1628] via-[#1E3A8A] to-[#0F2557] text-white pt-32 pb-8">
         {/* Animated Globe Background */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Animated Globe Grid Lines */}
@@ -541,7 +541,7 @@ export function LandingPage() {
       </section>
 
       {/* Live Ticker - Minimal */}
-      <div className="bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] py-2 overflow-hidden border-b border-blue-600">
+      <div className="bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] py-2 overflow-hidden border-b border-blue-600 z-0">
         <div className="flex gap-8 animate-marquee whitespace-nowrap text-white text-xs font-medium">
           <span>NYC→Delhi: <strong className="text-[#FBBF24]">$649</strong></span>
           <span>•</span>
@@ -561,7 +561,7 @@ export function LandingPage() {
       <section 
         ref={el => { sectionRefs.current['features'] = el; }}
         data-section-id="features"
-        className={`py-10 bg-white border-b border-gray-100 ${visibleSections.has('features') ? 'visible' : ''}`}
+        className={`py-10 bg-white border-b border-gray-100 z-0 ${visibleSections.has('features') ? 'visible' : ''}`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-6">

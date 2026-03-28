@@ -249,20 +249,20 @@ function transformJourneysToFlights(journeys: JourneyResponse[], cabinClass: str
 
     // Transform segments to our format
     const flightSegments: FlightSegment[] = segments.map(seg => ({
-      airline: seg.AirlineName || seg.Airline,
-      flightNumber: seg.FlightNumber,
+      airline: seg.AirlineName || seg.Airline || '',
+      flightNumber: seg.FlightNumber || '',
       departure: {
-        airport: seg.Origin,
-        time: formatTime(seg.DepartureTime),
-        date: formatDate(seg.DepartureTime),
+        airport: seg.Origin || '',
+        time: formatTime(seg.DepartureTime || ''),
+        date: formatDate(seg.DepartureTime || ''),
       },
       arrival: {
-        airport: seg.Destination,
-        time: formatTime(seg.ArrivalTime),
-        date: formatDate(seg.ArrivalTime),
+        airport: seg.Destination || '',
+        time: formatTime(seg.ArrivalTime || ''),
+        date: formatDate(seg.ArrivalTime || ''),
       },
-      duration: formatDuration(seg.Duration),
-      stops: seg.StopsCount,
+      duration: formatDuration(seg.Duration || 0),
+      stops: seg.StopsCount || 0,
     }));
 
     // Calculate total price (sum of all segment prices)
@@ -274,14 +274,14 @@ function transformJourneysToFlights(journeys: JourneyResponse[], cabinClass: str
     // Count total stops
     const totalStops = Math.max(0, segments.length - 1);
 
-    // Get available seats (minimum across all segments)
-    const availableSeats = Math.min(...segments.map(seg => seg.Seats || 0));
+    // Get available seats (minimum across all segments, fallback to 0 if empty)
+    const availableSeats = segments.length > 0 ? Math.min(...segments.map(seg => seg.Seats ?? 9999)) : 0;
 
     return {
-      id: `${journey.JourneyId}-${journey.SegmentId}`,
-      journeyId: journey.JourneyId,
-      segmentId: journey.SegmentId,
-      airline: firstSegment?.AirlineName || firstSegment?.Airline || 'Unknown Airline',
+      id: `${journey.JourneyId || ''}-${journey.SegmentId || ''}`,
+      journeyId: journey.JourneyId || '',
+      segmentId: journey.SegmentId || '',
+      airline: (firstSegment?.AirlineName || firstSegment?.Airline || 'Unknown Airline'),
       price: totalPrice,
       currency: 'USD', // Backend returns prices in USD for USA-India routes
       outbound: flightSegments,
