@@ -1,9 +1,19 @@
 // Promotional Sidebar Component
 import { Phone, Zap, Shield, Award, Gift, Clock, Star, TrendingDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getContactInfo } from '../services/cmsService';
 
 export function PromotionalSidebar() {
+  const [contact, setContact] = useState<any>(null);
+  useEffect(() => {
+    getContactInfo().then(setContact);
+  }, []);
+
+  const phoneDisplay = contact?.phoneDisplay || '1-800-123-4567';
+  const phoneTel = contact?.phoneTel || '+18001234567';
+
   const handleCallNow = () => {
-    window.location.href = 'tel:+15551234567';
+    window.location.href = `tel:${phoneTel}`;
   };
 
   return (
@@ -25,7 +35,7 @@ export function PromotionalSidebar() {
             className="w-full bg-white text-[#FF6B35] py-3 rounded-lg font-bold hover:bg-gray-100 transition-all shadow-lg flex items-center justify-center gap-2"
           >
             <Phone className="w-5 h-5" />
-            (555) 123-4567
+            {phoneDisplay}
           </button>
           <div className="mt-4 pt-4 border-t border-white/20">
             <div className="flex items-center gap-2 text-white/90 text-xs">
@@ -178,7 +188,7 @@ export function PromotionalSidebar() {
         <div className="space-y-2 text-sm text-gray-700">
           <div className="flex items-center gap-2">
             <Phone className="w-4 h-4 text-[#1E3A8A]" />
-            <span>(555) 123-4567</span>
+            <span>{phoneDisplay}</span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-[#1E3A8A]" />

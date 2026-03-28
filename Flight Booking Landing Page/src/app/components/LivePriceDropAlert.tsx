@@ -3,6 +3,7 @@
 
 import { TrendingDown, X, Phone, Plane, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { getContactInfo } from '../services/cmsService';
 
 interface PriceDrop {
   id: number;
@@ -22,6 +23,14 @@ export function LivePriceDropAlert() {
   const [currentDrop, setCurrentDrop] = useState<PriceDrop | null>(null);
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [contact, setContact] = useState<any>(null);
+  
+  useEffect(() => {
+    getContactInfo().then(setContact);
+  }, []);
+  
+  const phoneDisplay = contact?.phoneDisplay || '1-800-123-4567';
+  const phoneTel = contact?.phoneTel || '+18001234567';
 
   useEffect(() => {
     // Check if user has dismissed the popup in this session
@@ -129,11 +138,11 @@ export function LivePriceDropAlert() {
             🔥 Get exclusive phone-only deals like this!
           </p>
           <button
-            onClick={() => window.location.href = 'tel:+18001234567'}
-            className="w-full bg-gradient-to-r from-[#FF6B35] to-[#F7931E] text-white py-2.5 rounded-lg font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+            onClick={() => window.location.href = `tel:${phoneTel}`}
+            className="w-full bg-orange-500 text-white py-2.5 rounded-lg font-bold hover:bg-orange-600 transition-all duration-300 flex items-center justify-center gap-2 text-sm shadow-md"
           >
             <Phone className="w-4 h-4" />
-            Call 1-800-123-4567
+            {phoneDisplay}
           </button>
         </div>
 

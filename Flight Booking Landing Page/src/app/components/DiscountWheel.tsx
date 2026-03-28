@@ -1,7 +1,8 @@
 // COMPACT CREATIVE COMPONENT: Gamified Discount - Minimal Design
 
 import { Phone, Gift, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getContactInfo } from '../services/cmsService';
 
 export function DiscountWheel() {
   const [spinning, setSpinning] = useState(false);
@@ -21,8 +22,16 @@ export function DiscountWheel() {
     }, 2000);
   };
 
+  const [contact, setContact] = useState<any>(null);
+  useEffect(() => {
+    getContactInfo().then(setContact);
+  }, []);
+
+  const phoneDisplay = contact?.phoneDisplay || '1-800-123-4567';
+  const phoneTel = contact?.phoneTel || '+18001234567';
+
   const handleCall = () => {
-    window.location.href = 'tel:+18001234567';
+    window.location.href = `tel:${phoneTel}`;
   };
 
   return (

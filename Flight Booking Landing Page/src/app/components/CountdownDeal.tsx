@@ -3,6 +3,7 @@
 
 import { Clock, Zap, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { getContactInfo } from '../services/cmsService';
 
 interface CountdownDealProps {
   route: string;
@@ -30,8 +31,14 @@ export function CountdownDeal({ route, price, originalPrice, initialMinutes = 15
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
 
+  const [contact, setContact] = useState<any>(null);
+  useEffect(() => {
+    getContactInfo().then(setContact);
+  }, []);
+  const phoneTel = contact?.phoneTel || '+18001234567';
+
   const handleCall = () => {
-    window.location.href = 'tel:+18001234567';
+    window.location.href = `tel:${phoneTel}`;
   };
 
   return (

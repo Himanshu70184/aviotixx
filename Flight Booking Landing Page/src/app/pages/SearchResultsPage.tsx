@@ -1,5 +1,6 @@
 // Search Results Page - Dedicated page for showing flight search results
 import { useEffect, useState } from 'react';
+import { getContactInfo } from '../services/cmsService';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Phone, ArrowLeft, Plane } from 'lucide-react';
 import { FlightResults } from '../components/FlightResults';
@@ -12,6 +13,13 @@ import { searchFlights, FlightResult, FlightSearchParams } from '../services/tra
 import logo from '../../imports/AVIOTIX_LOGO_tranparent.svg?url';
 
 export function SearchResultsPage() {
+    // Dynamic contact info for footer CTA
+    const [contact, setContact] = useState<any>(null);
+    useEffect(() => {
+      getContactInfo().then(setContact);
+    }, []);
+    const phoneDisplay = contact?.phoneDisplay || '1-800-123-4567';
+    const phoneTel = contact?.phoneTel || '+18001234567';
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
@@ -466,11 +474,11 @@ export function SearchResultsPage() {
               </p>
             </div>
             <button
-              onClick={() => window.location.href = 'tel:+18886714966'}
+              onClick={() => window.location.href = `tel:${phoneTel}`}
               className="bg-gradient-to-r from-[#FF6B35] to-[#F7931E] text-white px-6 py-3 rounded-lg font-bold hover:shadow-xl transition-all duration-300 flex items-center gap-2"
             >
               <Phone className="w-5 h-5" />
-              Call (1) 888 671-4966 Now
+              {phoneDisplay}
             </button>
           </div>
         </div>

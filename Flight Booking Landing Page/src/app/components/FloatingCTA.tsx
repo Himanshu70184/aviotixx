@@ -3,6 +3,7 @@
 
 import { Phone, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { getContactInfo } from '../services/cmsService';
 
 export function FloatingCTA() {
   const [visible, setVisible] = useState(false);
@@ -21,8 +22,16 @@ export function FloatingCTA() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [dismissed]);
 
+  const [contact, setContact] = useState<any>(null);
+  useEffect(() => {
+    getContactInfo().then(setContact);
+  }, []);
+
+  const phoneDisplay = contact?.phoneDisplay || '1-800-123-4567';
+  const phoneTel = contact?.phoneTel || '+18001234567';
+
   const handleCall = () => {
-    window.location.href = 'tel:+18001234567';
+    window.location.href = `tel:${phoneTel}`;
   };
 
   if (!visible) return null;
@@ -47,7 +56,7 @@ export function FloatingCTA() {
           </div>
           <div className="text-left">
             <p className="text-sm opacity-90">Talk to Expert</p>
-            <p className="text-lg font-bold">1-800-123-4567</p>
+            <p className="text-lg font-bold">{phoneDisplay}</p>
           </div>
         </button>
 

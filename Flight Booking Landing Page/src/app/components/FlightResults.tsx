@@ -1,7 +1,8 @@
 // Premium Flight Results Display Component
 import { Plane, Clock, MapPin, ArrowRight, Star, Zap, Phone, AlertCircle, CreditCard } from 'lucide-react';
 import { FlightResult } from '../services/travelportApi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getContactInfo } from '../services/cmsService';
 import { useNavigate } from 'react-router';
 import { getAirlineLogo } from '../utils/airlineLogos';
 import { getAirportCity, getAirportName } from '../data/airports';
@@ -85,6 +86,11 @@ export function FlightResults({ flights, loading, error, onCallNow, isMockData, 
   }
 
   // Error state
+  const [contact, setContact] = useState<any>(null);
+  useEffect(() => {
+    getContactInfo().then(setContact);
+  }, []);
+  const phoneDisplay = contact?.phoneDisplay || '1-800-123-4567';
   if (error) {
     return (
       <div className="bg-gradient-to-br from-red-50/80 to-orange-50/80 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-red-200/50">
@@ -95,7 +101,7 @@ export function FlightResults({ flights, loading, error, onCallNow, isMockData, 
           <div>
             <h3 className="text-xl font-bold text-red-900 mb-1">Search Error</h3>
             <p className="text-red-700">{error}</p>
-            <p className="text-sm text-red-600 mt-2">Please try again or call us for assistance: <span className="font-bold">(555) 123-4567</span></p>
+            <p className="text-sm text-red-600 mt-2">Please try again or call us for assistance: <span className="font-bold">{phoneDisplay}</span></p>
           </div>
         </div>
       </div>
@@ -256,11 +262,11 @@ export function FlightResults({ flights, loading, error, onCallNow, isMockData, 
           Call us now to unlock exclusive unpublished fares up to <span className="font-bold text-yellow-300">30% cheaper</span>!
         </p>
         <a
-          href="tel:+15551234567"
+          href={`tel:${contact?.phoneTel || '+18001234567'}`}
           className="inline-flex items-center gap-3 bg-gradient-to-r from-[#FF6B35] to-[#F7931E] text-white px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
         >
           <Phone className="w-6 h-6" />
-          Call (555) 123-4567
+          {phoneDisplay}
           <ArrowRight className="w-6 h-6" />
         </a>
       </div>
